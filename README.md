@@ -1,6 +1,6 @@
 # GHEPARDI
 
-Club privato Next.js e Supabase. L'admin crea gli account senza inviare email: il sito mostra una password temporanea una sola volta; il membro la cambia al primo accesso. I profili disattivati non possono usare il sito o i dati protetti.
+Club privato Next.js e Supabase. L'admin crea gli account senza inviare email: il sito mostra una password temporanea una sola volta; il membro la cambia al primo accesso. L'admin può scrivere post, salvarli come bozze e pubblicarli; i membri possono commentare e reagire. I profili disattivati non possono usare il sito o i dati protetti.
 
 ## Avvio locale
 
@@ -29,8 +29,8 @@ Il primo admin va creato da un operatore con accesso autorizzato al progetto Sup
 
 Da `/admin` l'admin può creare un membro inserendo l'email. Comunicare le credenziali temporanee tramite un canale concordato, senza pubblicarle. La password temporanea è visibile una sola volta. Il membro deve cambiarla prima di vedere altri profili o usare l'app. Al momento il pannello non dispone di reset password o disattivazione: un operatore deve intervenire nella dashboard Supabase. Per disabilitare un account, con SQL privilegiato: `update public.profiles set status = 'disabled' where id = '<UUID>';`. Prima di aggiungere operazioni di modifica ruolo occorre proteggere l'ultimo admin in una transazione.
 
-Il test `tests/local-auth.mjs` richiede app e Supabase locali in esecuzione e le variabili `LOCAL_ANON_KEY` e `LOCAL_SERVICE_ROLE_KEY` tratte da `supabase status -o env`. Crea e rimuove account di prova esclusivamente in locale.
+I test `tests/local-auth.mjs` e `tests/local-posts.mjs` richiedono app e Supabase locali in esecuzione e le variabili `LOCAL_ANON_KEY` e `LOCAL_SERVICE_ROLE_KEY` tratte da `supabase status -o env`. Creano e rimuovono dati di prova esclusivamente in locale.
 
 ## Preview e produzione
 
-Configurare la chiave server come secret Vercel solo negli ambienti appropriati; le chiavi pubbliche non sostituiscono le policy RLS. La preview Vercel protetta richiede anche un account autorizzato su Vercel: per gli amici occorrerà una distribuzione accessibile, dopo verifica e approvazione della produzione. Le future policy per i contenuti devono controllare `private.has_changed_password()`, oltre a stato e ruolo. Non usare dati reali finché sicurezza end-to-end e backup non sono stati verificati.
+Configurare la chiave server come secret Vercel solo negli ambienti appropriati; le chiavi pubbliche non sostituiscono le policy RLS. La preview Vercel protetta richiede un account autorizzato su Vercel; il sito di produzione consente l'accesso con le sole credenziali GHEPARDI. Le future policy per i contenuti devono controllare `private.has_changed_password()`, oltre a stato e ruolo. Il progetto Supabase è attualmente condiviso tra preview e produzione: usare solo dati di prova nelle verifiche e prevedere un ambiente separato prima di cambiamenti rischiosi. Definire e verificare un backup dei dati.
