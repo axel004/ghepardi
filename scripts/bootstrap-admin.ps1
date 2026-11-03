@@ -11,7 +11,7 @@ try {
   $env:GHEPARDI_BOOTSTRAP_EMAIL = $Email
   $env:GHEPARDI_PROJECT_REF = $ProjectRef
   $env:GHEPARDI_BOOTSTRAP_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)
-  node scripts/bootstrap-admin.cjs
+  node scripts/bootstrap-admin.mjs
   if ($LASTEXITCODE -ne 0) { throw 'Creazione dell’account non riuscita.' }
 } finally {
   [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)

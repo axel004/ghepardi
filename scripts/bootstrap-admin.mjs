@@ -1,5 +1,5 @@
-const { execFileSync } = require('node:child_process');
-const { createClient } = require('@supabase/supabase-js');
+import { execFileSync } from 'node:child_process';
+import { createClient } from '@supabase/supabase-js';
 const { GHEPARDI_BOOTSTRAP_EMAIL: email, GHEPARDI_BOOTSTRAP_PASSWORD: password, GHEPARDI_PROJECT_REF: ref } = process.env;
 if (!email || !password || password.length < 12 || !/^[a-z0-9]{20}$/.test(ref || '')) {
   console.error('Dati mancanti o password più corta di 12 caratteri.'); process.exit(1);
