@@ -5,7 +5,7 @@ if (!email || !password || password.length < 12 || !/^[a-z0-9]{20}$/.test(ref ||
   console.error('Dati mancanti o password più corta di 12 caratteri.'); process.exit(1);
 }
 const keys = JSON.parse(execFileSync('supabase', ['projects', 'api-keys', '--project-ref', ref, '-o', 'json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
-const secret = keys.find((key) => key.type === 'secret')?.api_key;
+const secret = keys.find((key) => key.name === 'service_role')?.api_key;
 if (!secret) { console.error('Chiave server non disponibile.'); process.exit(1); }
 const admin = createClient(`https://${ref}.supabase.co`, secret, { auth: { persistSession: false, autoRefreshToken: false } });
 (async () => {
