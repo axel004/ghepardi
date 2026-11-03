@@ -29,6 +29,6 @@ Il test `tests/local-auth.mjs` richiede app e Supabase locali in esecuzione e le
 
 ## Prima di una preview cloud
 
-Creare un progetto Supabase dedicato, applicare le migrazioni e configurare esplicitamente Auth: email/password attivo, signup pubblico e accesso anonimo disabilitati. Copiare il template di invito dal repository alla configurazione Auth cloud, configurare Site URL, redirect e SMTP, protezioni Auth e variabili di ambiente su Vercel. Verificare su preview login, invito, revoca con JWT ancora valido e tentativi diretti API. Nessuna secret key nel client. Produzione solo dopo approvazione e verifica completa.
+Creare un progetto Supabase dedicato, applicare le migrazioni e configurare esplicitamente Auth: email/password attivo, signup pubblico e accesso anonimo disabilitati. Il progetto cloud gratuito richiede un provider SMTP personalizzato per modificare il template: configurarlo e copiare il template OTP dal repository prima di inviare inviti. Il template predefinito non è compatibile con questo flusso e inserisce un token nel link. Configurare Site URL, redirect, protezioni Auth e variabili di ambiente su Vercel. Verificare su preview login, invito, revoca con JWT ancora valido e tentativi diretti API. Nessuna secret key nel client. Produzione solo dopo approvazione e verifica completa.
 
 Invio inviti dal pannello, recupero password, amministrazione e deploy non sono ancora implementati o verificati. Non usare dati reali finché non è stata verificata la sicurezza end-to-end e definito il backup.
