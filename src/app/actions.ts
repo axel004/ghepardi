@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireMember } from '@/lib/auth';
+import { requireMember, requireReadyMember } from '@/lib/auth';
 
 export async function login(formData: FormData) {
   const email = formData.get('email');
@@ -19,23 +19,13 @@ export async function logout() {
   redirect('/login');
 }
 export async function updateProfile(formData: FormData) {
-  const { supabase, profile } = await requireMember();
+  const { supabase, profile } = await requireReadyMember();
   const username = formData.get('username');
   const displayName = formData.get('display_name');
   if (typeof username !== 'string' || !/^[a-z0-9_]{3,30}$/.test(username) || typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80) redirect('/profile?error=validation');
   const { error } = await supabase.from('profiles').update({ username, display_name: displayName.trim() }).eq('id', profile.id);
   if (error) redirect('/profile?error=save');
   redirect('/');
-}
-
-export async function acceptInvite(formData: FormData) {
-  const email = formData.get('email');
-  const token = formData.get('code');
-  if (typeof email !== 'string' || !email.trim() || email.length > 254 || typeof token !== 'string' || !/^\d{6}$/.test(token)) redirect('/invite?error=invalid');
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'invite' });
-  if (error) redirect('/invite?error=invalid');
-  redirect('/set-password');
 }
 
 export async function setPassword(formData: FormData) {

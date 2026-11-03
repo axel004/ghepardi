@@ -1,7 +1,7 @@
 import { logout, updateProfile } from '@/app/actions';
-import { requireMember } from '@/lib/auth';
+import { requireReadyMember } from '@/lib/auth';
 export default async function Profile({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { profile } = await requireMember();
+  const { profile } = await requireReadyMember();
   const { error } = await searchParams;
   return <main className="panel"><p className="eyebrow">🐆 GHEPARDI</p><h1>Completa il profilo</h1><p>Come ti chiamano nel branco?</p>
     {error && <p role="alert" className="error">{error === 'validation' ? 'Controlla i dati inseriti.' : 'Salvataggio non riuscito. Il nome utente potrebbe essere già in uso.'}</p>}

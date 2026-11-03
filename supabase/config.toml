@@ -316,6 +316,3 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-[auth.email.template.invite]
-subject = "Invito nei Ghepardi"
-content_path = "./supabase/templates/invite.html"

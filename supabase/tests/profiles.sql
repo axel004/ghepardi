@@ -3,6 +3,7 @@ select plan(9);
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-000000000001', 'one@example.test'),
   ('00000000-0000-0000-0000-000000000002', 'two@example.test');
+update public.profiles set must_change_password = false;
 select is((select count(*) from public.profiles), 2::bigint, 'trigger creates profiles');
 set local role anon;
 select throws_ok('select * from public.profiles', '42501', null, 'anonymous cannot read profiles');
