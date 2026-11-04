@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
@@ -7,7 +8,7 @@ import { addComment, deleteComment, reactToPost } from '../actions';
 export default async function PostPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ error?: string; page?: string }> }) {
   const { supabase, profile } = await requireReadyMember(), { slug } = await params;
   if (!/^[a-z0-9-]{1,180}$/.test(slug)) notFound();
-  const { data: post, error } = await supabase.from('posts').select('id,title,content,category,status').eq('slug', slug).maybeSingle();
+  const { data: post, error } = await supabase.from('posts').select('id,title,content,category,status,cover_photo_id').eq('slug', slug).maybeSingle();
   if (error) throw new Error('Impossibile caricare il post');
   if (!post) notFound();
   const query = await searchParams, page = pageNumber(query.page);
@@ -16,7 +17,7 @@ export default async function PostPage({ params, searchParams }: { params: Promi
     supabase.from('post_reactions').select('emoji,user_id').eq('post_id', post.id),
   ]) : [{ data: [], error: null }, { data: [], error: null }];
   const comments = commentResult.data ?? [], reactions = reactionResult.data ?? [];
-  return <main className="panel"><p><Link href="/">← Home</Link></p><p className="eyebrow">{post.category}{post.status === 'draft' && ' · BOZZA'}</p><h1>{post.title}</h1><div className="post-content">{post.content}</div>
+  return <main className="panel"><p><Link href="/">← Home</Link></p><p className="eyebrow">{post.category}{post.status === 'draft' && ' · BOZZA'}</p><h1>{post.title}</h1>{post.cover_photo_id && <img className="post-image" src={`/media/${post.cover_photo_id}`} alt={`Copertina: ${post.title}`} />}<div className="post-content">{post.content}</div>
     {profile.role === 'admin' && <p><Link href={`/admin/posts/${post.id}`}>Modifica post</Link></p>}
     {post.status === 'published' && <><h2>Reazioni</h2>{reactionResult.error ? <p className="error">Impossibile caricare le reaction.</p> : <div className="reactions">{emojis.map((emoji) => {
       const selected = reactions.some((r) => r.emoji === emoji && r.user_id === profile.id), count = reactions.filter((r) => r.emoji === emoji).length;

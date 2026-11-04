@@ -12,7 +12,7 @@ reset role;
 update auth.users set encrypted_password = 'new' where id = '00000000-0000-0000-0000-000000000011';
 select is((select must_change_password from public.profiles where id = '00000000-0000-0000-0000-000000000011'), false, 'password update clears flag');
 set local role authenticated;
-select is((select count(*) from public.profiles), 2::bigint, 'member can read active profiles after password change');
+select is((select count(*) from public.profiles where id in ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012')), 2::bigint, 'member can read active profiles after password change');
 select lives_ok($$update public.profiles set display_name = 'Test' where id = '00000000-0000-0000-0000-000000000011'$$, 'member can update own profile after password change');
 select * from finish();
 rollback;

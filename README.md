@@ -1,6 +1,6 @@
 # GHEPARDI
 
-Club privato Next.js e Supabase. L'admin crea gli account senza inviare email: il sito mostra una password temporanea una sola volta; il membro la cambia al primo accesso. L'admin può scrivere post, salvarli come bozze e pubblicarli; i membri possono commentare e reagire. I profili disattivati non possono usare il sito o i dati protetti.
+Club privato Next.js e Supabase. L'admin crea gli account senza inviare email: il sito mostra una password temporanea una sola volta; il membro la cambia al primo accesso. L'admin può scrivere post, creare album e caricare foto; i membri possono vedere contenuti, commentare e reagire. I profili disattivati non possono usare il sito o i dati protetti.
 
 ## Avvio locale
 
@@ -8,7 +8,7 @@ Servono Node.js, npm, Docker e Supabase CLI. Usare un progetto Supabase separato
 
 ```sh
 npm install
-supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
+supabase start -x realtime,imgproxy,edge-runtime,logflare,vector,supavisor
 ```
 
 Copiare `.env.example` in `.env.local` e impostare URL, chiave anon/publishable e chiave server locali usando `supabase status`. La chiave `SUPABASE_SECRET_KEY` aggira RLS: solo server, mai in variabili `NEXT_PUBLIC_`, Git, log o browser. La chiave locale service_role è accettata per i test.
@@ -29,7 +29,9 @@ Il primo admin va creato da un operatore con accesso autorizzato al progetto Sup
 
 Da `/admin` l'admin può creare un membro inserendo l'email. Comunicare le credenziali temporanee tramite un canale concordato, senza pubblicarle. La password temporanea è visibile una sola volta. Il membro deve cambiarla prima di vedere altri profili o usare l'app. Al momento il pannello non dispone di reset password o disattivazione: un operatore deve intervenire nella dashboard Supabase. Per disabilitare un account, con SQL privilegiato: `update public.profiles set status = 'disabled' where id = '<UUID>';`. Prima di aggiungere operazioni di modifica ruolo occorre proteggere l'ultimo admin in una transazione.
 
-I test `tests/local-auth.mjs` e `tests/local-posts.mjs` richiedono app e Supabase locali in esecuzione e le variabili `LOCAL_ANON_KEY` e `LOCAL_SERVICE_ROLE_KEY` tratte da `supabase status -o env`. Creano e rimuovono dati di prova esclusivamente in locale.
+I test `tests/local-auth.mjs`, `tests/local-posts.mjs` e `tests/local-gallery.mjs` richiedono app e Supabase locali in esecuzione e le variabili `LOCAL_ANON_KEY` e `LOCAL_SERVICE_ROLE_KEY` tratte da `supabase status -o env`. Creano e rimuovono dati di prova esclusivamente in locale.
+
+Le foto vengono convertite in JPEG e ridotte a massimo 1920 pixel sul lato maggiore; l'originale e i metadati non vengono conservati. Sono private e vengono servite solo ai membri abilitati. L'eliminazione di una foto la rimuove anche dalle eventuali copertine dei post; un album si elimina dopo aver rimosso le foto. Le 50 foto più recenti sono selezionabili come copertina.
 
 ## Preview e produzione
 

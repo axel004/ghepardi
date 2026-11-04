@@ -13,16 +13,17 @@ export async function savePost(formData: FormData) {
   const content = String(formData.get('content') || '').trim();
   const category = String(formData.get('category') || '');
   const status = String(formData.get('status') || '');
+  const cover = String(formData.get('cover_photo_id') || '');
   const back = id && isUuid(id) ? `/admin/posts/${id}` : '/admin/posts/new';
-  if ((id && !isUuid(id)) || !title || title.length > 160 || !content || content.length > 50000 || !categories.some((x) => x === category) || !['draft', 'published'].includes(status)) redirect(`${back}?error=validation`);
+  if ((id && !isUuid(id)) || (cover && !isUuid(cover)) || !title || title.length > 160 || !content || content.length > 50000 || !categories.some((x) => x === category) || !['draft', 'published'].includes(status)) redirect(`${back}?error=validation`);
   let error;
   if (id) {
-    const result = await supabase.from('posts').update({ title, content, category, status }).eq('id', id).select('id').maybeSingle();
+    const result = await supabase.from('posts').update({ title, content, category, status, cover_photo_id: cover || null }).eq('id', id).select('id').maybeSingle();
     error = result.error || !result.data;
   } else {
     const newId = randomUUID();
     const base = title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 140).replace(/-+$/, '') || 'post';
-    const result = await supabase.from('posts').insert({ id: newId, author_id: profile.id, title, slug: `${base}-${newId}`, content, category, status });
+    const result = await supabase.from('posts').insert({ id: newId, author_id: profile.id, title, slug: `${base}-${newId}`, content, category, status, cover_photo_id: cover || null });
     error = result.error;
   }
   if (error) redirect(`${back}?error=save`);
