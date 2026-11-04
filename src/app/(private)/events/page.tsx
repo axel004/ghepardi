@@ -1,0 +1,18 @@
+import { requireReadyMember } from '@/lib/auth';
+import { createEvent, deleteClubItem } from '../club-actions';
+
+type Event = { id: string; title: string; event_date: string; event_time: string | null; location: string | null; description: string | null };
+function EventForm({ event }: { event?: Event }) {
+  const suffix = event?.id ?? 'new';
+  return <form action={createEvent} className="form">{event && <input type="hidden" name="id" value={event.id} />}<label htmlFor={`title-${suffix}`}>Titolo</label><input id={`title-${suffix}`} name="title" maxLength={120} required defaultValue={event?.title} /><label htmlFor={`date-${suffix}`}>Data</label><input id={`date-${suffix}`} name="date" type="date" required defaultValue={event?.event_date} /><label htmlFor={`time-${suffix}`}>Ora <small>(facoltativa)</small></label><input id={`time-${suffix}`} name="time" type="time" defaultValue={event?.event_time?.slice(0, 5)} /><label htmlFor={`location-${suffix}`}>Luogo <small>(facoltativo)</small></label><input id={`location-${suffix}`} name="location" maxLength={160} defaultValue={event?.location ?? ''} /><label htmlFor={`description-${suffix}`}>Dettagli <small>(facoltativi)</small></label><textarea id={`description-${suffix}`} name="description" maxLength={2000} rows={3} defaultValue={event?.description ?? ''} /><button>{event ? 'Salva modifiche' : 'Crea evento'}</button></form>;
+}
+
+export default async function Events({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string }> }) {
+  const { supabase, profile } = await requireReadyMember(), query = await searchParams;
+  const { data, error } = await supabase.from('events').select('id,title,event_date,event_time,location,description').order('event_date', { ascending: false }).order('event_time', { ascending: false, nullsFirst: false }).limit(100);
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const upcoming = data?.filter(event => event.event_date >= today).reverse(), past = data?.filter(event => event.event_date < today);
+  return <main className="panel section-panel"><p className="eyebrow">📅 SI ESCE?</p><h1>Eventi</h1><p>Cene, viaggi, compleanni e altre ottime scuse.</p>{query.error && <p className="error" role="alert">Operazione non riuscita. Controlla i dati e riprova.</p>}{query.saved && <p role="status">Evento aggiornato!</p>}
+    {profile.role === 'admin' && <details className="club-create"><summary>+ Crea un evento</summary><EventForm /></details>}
+    {error ? <p className="error">Impossibile caricare gli eventi.</p> : !data?.length ? <p>Ancora nessun evento. Il calendario aspetta il branco.</p> : <>{[ ['In arrivo', upcoming], ['Già successi', past] ] .map(([title, events]) => { const list = events as typeof data; return list?.length ? <section key={title as string}><h2>{title as string}</h2>{list.map(event => <article className="club-card" key={event.id}><p className="eyebrow">{event.event_date.split('-').reverse().join('/')}{event.event_time ? ` · ${event.event_time.slice(0, 5)}` : ''}</p><h3>{event.title}</h3>{event.location && <p>📍 {event.location}</p>}{event.description && <p className="post-content">{event.description}</p>}{profile.role === 'admin' && <div className="club-admin"><details><summary>Modifica evento</summary><EventForm event={event} /></details><details><summary>Elimina evento</summary><form action={deleteClubItem}><input type="hidden" name="kind" value="events" /><input type="hidden" name="id" value={event.id} /><button className="secondary">Conferma eliminazione</button></form></details></div>}</article>)}</section> : null; })}</>}</main>;
+}
