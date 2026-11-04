@@ -46,9 +46,10 @@ export async function addComment(formData: FormData) {
   const postId = String(formData.get('post_id') || '');
   const slug = String(formData.get('slug') || '');
   const content = String(formData.get('content') || '').trim();
+  const parent = String(formData.get('parent_id') || '');
   if (!isUuid(postId) || !/^[a-z0-9-]{1,180}$/.test(slug)) redirect('/');
-  if (!content || content.length > 2000) redirect(`/posts/${slug}?error=comment`);
-  const { error } = await supabase.from('comments').insert({ post_id: postId, user_id: profile.id, content });
+  if (!content || content.length > 2000 || (parent && !isUuid(parent))) redirect(`/posts/${slug}?error=comment`);
+  const { error } = await supabase.from('comments').insert({ post_id: postId, user_id: profile.id, content, parent_id: parent || null });
   if (error) redirect(`/posts/${slug}?error=comment`);
   revalidatePath(`/posts/${slug}`);
   redirect(`/posts/${slug}`);
