@@ -48,5 +48,5 @@ export function UploadForm({ albumId }: { albumId: string }) {
     if (input.current) input.current.value = '';
     setBusy(false); router.refresh();
   }
-  return <form onSubmit={upload} className="form"><label htmlFor="photos">Scegli le foto</label><input ref={input} id="photos" type="file" accept="image/*" multiple required disabled={busy} /><small>Puoi selezionarne più di una. Le foto vengono ridotte automaticamente.</small><button disabled={busy}>{busy ? 'Caricamento…' : 'Carica foto'}</button>{status && <p role="status">{status}</p>}</form>;
+  return <form onSubmit={upload} className="form"><label htmlFor="photos">Scegli le foto</label><input ref={input} id="photos" type="file" accept="image/*" multiple required disabled={busy} /><small>Puoi sceglierne più di una, fino a 30 MB ciascuna. Saranno salvate in JPEG, con lato massimo di 1920 pixel.</small><button disabled={busy}>{busy ? 'Caricamento…' : 'Carica foto'}</button>{status && <p role="status">{status}</p>}</form>;
 }
