@@ -14,12 +14,13 @@ export default async function Stats({ searchParams }: { searchParams: Promise<{ 
     { table: 'polls', column: 'created_at', label: 'Sondaggi creati', icon: '🗳️' },
     { table: 'quotes', column: 'created_at', label: 'Citazioni', icon: '🗯️' },
     { table: 'events', column: 'event_date', label: 'Eventi in calendario', icon: '📅' },
+    { table: 'awards', column: 'award_year', label: 'Premi assegnati', icon: '🏅' },
   ];
   const counts = await Promise.all(specs.map(({ table, column }) => {
     let query = supabase.from(table).select('*', { count: 'exact', head: true });
     if (table === 'posts') query = query.eq('status', 'published');
-    if (start && end) query = query.gte(column, start).lt(column, end);
+    if (start && end) query = table === 'awards' ? query.eq(column, selectedYear) : query.gte(column, start).lt(column, end);
     return query;
   }));
-  return <main className="panel section-panel"><p className="eyebrow">📊 I NUMERI DEL BRANCO</p><h1>{selectedYear ? `Il ${selectedYear} in numeri` : 'Statistiche'}</h1><p>{selectedYear ? 'Un piccolo riepilogo del vostro anno insieme.' : 'Da quando il club è online, senza inventarsi niente.'}</p><nav className="stats-links" aria-label="Periodo delle statistiche"><Link href="/stats">Sempre</Link><Link href={`/stats?year=${currentYear}`}>{currentYear}</Link><Link href={`/stats?year=${currentYear - 1}`}>{currentYear - 1}</Link></nav><div className="stats-grid">{specs.map((item, index) => <article className="club-card" key={item.table}><span>{item.icon}</span><strong>{counts[index].error ? '—' : counts[index].count ?? 0}</strong><small>{item.label}</small></article>)}</div>{counts.some(result => result.error) && <p className="error">Alcuni numeri non sono disponibili. Riprova più tardi.</p>}{selectedYear && <p><small>I contenuti sono conteggiati per data di pubblicazione o creazione (UTC); gli eventi per la data in calendario. I contenuti eliminati non sono inclusi.</small></p>}</main>;
+  return <main className="panel section-panel"><p className="eyebrow">📊 I NUMERI DEL BRANCO</p><h1>{selectedYear ? `Il ${selectedYear} in numeri` : 'Statistiche'}</h1><p>{selectedYear ? 'Un piccolo riepilogo del vostro anno insieme.' : 'Da quando il club è online, senza inventarsi niente.'}</p><nav className="stats-links" aria-label="Periodo delle statistiche"><Link href="/stats">Sempre</Link><Link href={`/stats?year=${currentYear}`}>{currentYear}</Link><Link href={`/stats?year=${currentYear - 1}`}>{currentYear - 1}</Link></nav><div className="stats-grid">{specs.map((item, index) => <article className="club-card" key={item.table}><span>{item.icon}</span><strong>{counts[index].error ? '—' : counts[index].count ?? 0}</strong><small>{item.label}</small></article>)}</div>{counts.some(result => result.error) && <p className="error">Alcuni numeri non sono disponibili. Riprova più tardi.</p>}{selectedYear && <p><small>I contenuti sono conteggiati per data di pubblicazione o creazione (UTC); gli eventi per la data in calendario e i premi per l’anno assegnato. I contenuti eliminati non sono inclusi.</small></p>}</main>;
 }
