@@ -9,7 +9,7 @@ const admin = createClient(api, service, { auth: { persistSession: false } });
 const reader = createClient(api, anon, { auth: { persistSession: false } });
 const password = `Test-${randomUUID()}`, editorEmail = `editor-${randomUUID()}@example.test`, readerEmail = `reader-${randomUUID()}@example.test`;
 const ids = []; let postId;
-function action(html) { const id = html.match(/name="(\$ACTION_ID_[^"]+)"/)?.[1]; assert.ok(id); return id; }
+function action(html) { const id = html.replace(/<form[^>]*>[\s\S]*?logout-button[\s\S]*?<\/form>/g, '').match(/name="(\$ACTION_ID_[^"]+)"/)?.[1]; assert.ok(id); return id; }
 function form(key, data) { const f = new FormData(); f.set(key, ''); for (const [k, v] of Object.entries(data)) f.set(k, v); return f; }
 async function login(email) {
   const page = await fetch(`${app}/login`);
@@ -33,6 +33,11 @@ try {
   page = await fetch(`${app}/admin/posts/${postId}`, { headers: { cookie: editorCookie } });
   result = await fetch(`${app}/admin/posts/${postId}`, { method: 'POST', headers: { cookie: editorCookie }, body: form(action(await page.text()), { id: postId, title: 'Ricordo di prova', content: 'Una bella serata', category: 'serate', status: 'published' }), redirect: 'manual' });
   assert.equal(result.headers.get('location'), '/admin/posts?saved=1');
+  page = await fetch(`${app}/`, { headers: { cookie: readerCookie } });
+  const dashboard = await page.text(); assert.equal(page.status, 200); assert.match(dashboard, /Ricordo di prova/); assert.match(dashboard, /href="\/gallery"/); assert.match(dashboard, /href="\/members"/); assert.doesNotMatch(dashboard, /href="\/admin"/);
+  page = await fetch(`${app}/`, { headers: { cookie: editorCookie } }); assert.match(await page.text(), /href="\/admin"/);
+  page = await fetch(`${app}/members`, { headers: { cookie: readerCookie } }); const members = await page.text(); assert.equal(page.status, 200); assert.match(members, new RegExp(`u${ids[0].replaceAll('-', '').slice(0, 12)}`));
+  page = await fetch(`${app}/members/u${ids[0].replaceAll('-', '').slice(0, 12)}`, { headers: { cookie: readerCookie } }); assert.equal(page.status, 200); assert.match(await page.text(), /Admin/);
   page = await fetch(`${app}/posts/${post.data.slug}`, { headers: { cookie: readerCookie } });
   assert.equal(page.status, 200); const html = await page.text(); assert.match(html, /Una bella serata/);
   const forms = [...html.matchAll(/<form[\s\S]*?<\/form>/g)].map((x) => x[0]);

@@ -10,7 +10,7 @@ const admin = createClient(api, service, { auth: { persistSession: false } });
 const member = createClient(api, anon, { auth: { persistSession: false } });
 const password = `Test-${randomUUID()}`, emails = [`editor-${randomUUID()}@example.test`, `member-${randomUUID()}@example.test`];
 const ids = []; let albumId, photoId, postId;
-function action(html) { const id = html.match(/name="(\$ACTION_ID_[^"]+)"/)?.[1]; assert.ok(id); return id; }
+function action(html) { const id = html.replace(/<form[^>]*>[\s\S]*?logout-button[\s\S]*?<\/form>/g, '').match(/name="(\$ACTION_ID_[^"]+)"/)?.[1]; assert.ok(id); return id; }
 function form(key, data) { const f = new FormData(); f.set(key, ''); for (const [k, v] of Object.entries(data)) f.set(k, v); return f; }
 async function login(email) {
   const page = await fetch(`${app}/login`);
@@ -36,6 +36,8 @@ try {
   response = await fetch(`${app}/api/gallery/upload`, { method: 'POST', headers: { cookie: editorCookie, origin: app }, body: upload(new Blob([new Uint8Array(2500001)], { type: 'image/jpeg' })) }); assert.equal(response.status, 400);
   response = await fetch(`${app}/api/gallery/upload`, { method: 'POST', headers: { cookie: editorCookie, origin: app }, body: upload(new Blob([jpeg], { type: 'image/jpeg' })) }); assert.equal(response.status, 200);
   const photos = await admin.from('photos').select('id,storage_path').eq('album_id', albumId); assert.ifError(photos.error); assert.equal(photos.data.length, 1); photoId = photos.data[0].id;
+  page = await fetch(`${app}/`, { headers: { cookie: memberCookie } });
+  const dashboard = await page.text(); assert.equal(page.status, 200); assert.match(dashboard, /Album di prova/); assert.ok(dashboard.includes(`/media/${photoId}?size=thumb`));
   response = await fetch(`${app}/media/${photoId}`, { redirect: 'manual' }); assert.equal(response.status, 307); assert.equal(response.headers.get('location'), '/login');
   response = await fetch(`${app}/media/${photoId}`, { headers: { cookie: memberCookie } }); assert.equal(response.status, 200); assert.match(response.headers.get('cache-control'), /no-store/); assert.equal(response.headers.get('content-type'), 'image/jpeg');
   response = await fetch(`${app}/media/${photoId}?size=thumb`, { headers: { cookie: memberCookie } }); assert.equal(response.status, 200); assert.equal((await sharp(Buffer.from(await response.arrayBuffer())).metadata()).format, 'jpeg');

@@ -1,15 +1,25 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import { redirect } from 'next/navigation';
-import { logout } from '@/app/actions';
-import { requireReadyMember } from '@/lib/auth';
 import Link from 'next/link';
-import { pageNumber } from '@/lib/posts';
+import { requireReadyMember } from '@/lib/auth';
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { profile, supabase } = await requireReadyMember();
   if (!profile.username || !profile.display_name) redirect('/profile');
-  const page = pageNumber((await searchParams).page);
-  const { data: posts, error } = await supabase.from('posts').select('id, title, slug, content, category, published_at, cover_photo_id').eq('status', 'published').order('published_at', { ascending: false }).order('id', { ascending: false }).range((page - 1) * 20, page * 20);
-  return <main className="panel"><div className="brand">🐆</div><p className="eyebrow">PRIVATE MEMBERS CLUB</p><h1>Ciao {profile.display_name}.</h1><p>Le ultime dal branco.</p><p><Link href="/gallery">📸 Gallery</Link></p>{profile.role === 'admin' && <p><Link href="/admin">⚙️ Pannello admin</Link></p>}
-    {error ? <p className="error">Impossibile caricare i post. Riprova.</p> : !posts?.length ? <p>Ancora nessun post. Il primo ricordo aspetta solo voi.</p> : posts.slice(0, 20).map((post) => <article className="post-card" key={post.id}><p className="eyebrow">{post.category}</p><h2><Link href={`/posts/${post.slug}`}>{post.title}</Link></h2>{post.cover_photo_id && <Link href={`/posts/${post.slug}`}><img className="post-image" src={`/media/${post.cover_photo_id}?size=thumb`} alt={`Copertina: ${post.title}`} loading="lazy" /></Link>}<p className="excerpt">{post.content}</p><Link href={`/posts/${post.slug}`}>Leggi e commenta →</Link></article>)}
-    <nav className="pagination" aria-label="Pagine dei post">{page > 1 && <Link href={`/?page=${page - 1}`}>← Più recenti</Link>}{posts && posts.length > 20 && <Link href={`/?page=${page + 1}`}>Più vecchi →</Link>}</nav><form action={logout}><button className="secondary">Esci</button></form></main>;
+  const { page } = await searchParams;
+  if (page && /^\d{1,6}$/.test(page)) redirect(`/posts?page=${page}`);
+  const [posts, albums, members] = await Promise.all([
+    supabase.from('posts').select('id,title,slug,content,category,cover_photo_id').eq('status', 'published').order('published_at', { ascending: false }).order('id', { ascending: false }).limit(3),
+    supabase.from('albums').select('id,title,event_date,photos(id,created_at)').order('created_at', { ascending: false }).order('created_at', { referencedTable: 'photos', ascending: false }).limit(1, { referencedTable: 'photos' }).limit(3),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+  ]);
+  const latest = posts.data?.[0];
+  return <main className="dashboard"><section className="dashboard-hero"><div><p className="eyebrow">🐆 IL TUO CLUB PRIVATO</p><h1>Ciao {profile.display_name},<br /><span>benvenuto nel branco.</span></h1><p>Storie, foto e momenti che meritano di restare.</p><div className="hero-actions"><Link className="button-link" href="/posts">Scopri i post <span>↗</span></Link><Link className="button-link subtle" href="/gallery">Sfoglia la gallery</Link></div></div><div className="hero-mark" aria-hidden="true"><span>🐆</span><small>PRIVATE<br />BY NATURE.</small></div></section>
+    <section className="quick-grid" aria-label="Esplora il club"><Link className="quick-card" href="/posts"><span>📰</span><strong>Post</strong><small>Le storie del gruppo</small><b>↗</b></Link><Link className="quick-card" href="/gallery"><span>📸</span><strong>Gallery</strong><small>Foto e ricordi</small><b>↗</b></Link><Link className="quick-card" href="/members"><span>🐆</span><strong>Il branco</strong><small>{members.error ? 'I membri del club' : `${members.count ?? 0} membri nel club`}</small><b>↗</b></Link>{profile.role === 'admin' && <Link className="quick-card admin-card" href="/admin"><span>⚙️</span><strong>Admin</strong><small>Gestisci il club</small><b>↗</b></Link>}</section>
+    <div className="dashboard-columns"><section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">IL DIARIO DEL GRUPPO</p><h2>Ultime dal branco <span>✳</span></h2></div><Link href="/posts">Tutti i post →</Link></div>
+      {posts.error ? <p className="empty-card">Impossibile caricare i post. Riprova più tardi.</p> : !latest ? <div className="empty-card"><strong>Qui inizia la storia.</strong><p>Il primo post aspetta solo voi.</p>{profile.role === 'admin' && <Link href="/admin/posts/new">Scrivi il primo post →</Link>}</div> : <div className="stories-list">{posts.data?.map((post, index) => <Link className={`story-card ${index === 0 ? 'featured-story' : ''}`} href={`/posts/${post.slug}`} key={post.id}>{post.cover_photo_id && <img src={`/media/${post.cover_photo_id}?size=thumb`} alt="" loading="lazy" />}<div><small>{post.category}</small><h3>{post.title}</h3><p className="excerpt">{post.content}</p><span>Leggi la storia ↗</span></div></Link>)}</div>}</section>
+      <section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">MOMENTI DA RIVEDERE</p><h2>Gallery <span>✳</span></h2></div><Link href="/gallery">Tutti gli album →</Link></div>
+        {albums.error ? <p className="empty-card">Impossibile caricare gli album.</p> : !albums.data?.length ? <div className="empty-card"><strong>La gallery è pronta.</strong><p>Le foto migliori sono ancora da caricare.</p>{profile.role === 'admin' && <Link href="/admin/gallery">Crea un album →</Link>}</div> : <div className="album-list">{albums.data.map((album) => <Link href={`/gallery/${album.id}`} className="album-card" key={album.id}>{album.photos?.[0] ? <img src={`/media/${album.photos[0].id}?size=thumb`} alt="" loading="lazy" /> : <span className="album-placeholder">📸</span>}<div><strong>{album.title}</strong><small>{album.event_date ? album.event_date.split('-').reverse().join('/') : 'Album del branco'}</small></div><b>↗</b></Link>)}</div>}
+      {profile.role === 'admin' && <aside className="admin-shortcut"><span>⚙️</span><div><strong>Hai qualcosa da raccontare?</strong><p>Post, foto e membri sono a portata di mano.</p><Link href="/admin">Apri il pannello admin →</Link></div></aside>}</section></div>
+  </main>;
 }

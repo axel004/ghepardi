@@ -22,8 +22,9 @@ export async function updateProfile(formData: FormData) {
   const { supabase, profile } = await requireReadyMember();
   const username = formData.get('username');
   const displayName = formData.get('display_name');
-  if (typeof username !== 'string' || !/^[a-z0-9_]{3,30}$/.test(username) || typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80) redirect('/profile?error=validation');
-  const { error } = await supabase.from('profiles').update({ username, display_name: displayName.trim() }).eq('id', profile.id);
+  const bio = formData.get('bio');
+  if (typeof username !== 'string' || !/^[a-z0-9_]{3,30}$/.test(username) || typeof displayName !== 'string' || !displayName.trim() || displayName.trim().length > 80 || (bio !== null && (typeof bio !== 'string' || bio.length > 500))) redirect('/profile?error=validation');
+  const { error } = await supabase.from('profiles').update({ username, display_name: displayName.trim(), bio: typeof bio === 'string' ? bio.trim() || null : profile.bio }).eq('id', profile.id);
   if (error) redirect('/profile?error=save');
   redirect('/');
 }
