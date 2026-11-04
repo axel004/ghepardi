@@ -26,3 +26,29 @@ jobs:
           version: 2.26.9
       - run: supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
       - run: supabase test db
+  deploy:
+    needs: [app, database]
+    # Salta le PR da fork (non hanno accesso ai secret)
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm i -g vercel@latest
+      # Produzione solo su push a main, preview in tutti gli altri casi
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
+      - name: Build
+        run: vercel build ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && '--prod' || '' }} --token="$VERCEL_TOKEN"
+      - name: Deploy
+        run: vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && '--prod' || '' }} --token="$VERCEL_TOKEN"
