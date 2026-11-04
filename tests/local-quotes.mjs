@@ -25,6 +25,11 @@ try {
   assert.ok((await two.from('quote_votes').insert({ quote_id: quoteId, user_id: users[0].id })).error, 'cannot impersonate');
   const forbidden = await two.from('quotes').delete().eq('id', quoteId).select('id'); assert.ifError(forbidden.error); assert.equal(forbidden.data.length, 0, 'cannot delete another member quote');
   const rendered = await (await fetch(`${app}/quotes`, { headers: { cookie } })).text(); assert.ok(rendered.includes(phrase)); assert.ok(rendered.replace(/<[^>]*>/g, '').includes('🐆 1'));
+  const stats = await fetch(`${app}/stats?year=${new Date().getUTCFullYear()}`, { headers: { cookie } }); assert.equal(stats.status, 200);
+  const statsHtml = await stats.text(); assert.ok(statsHtml.includes('Citazioni')); assert.ok(!statsHtml.includes('Alcuni numeri non sono disponibili'));
+  const year = new Date().getUTCFullYear(), counted = await one.from('quotes').select('*', { count: 'exact', head: true }).gte('created_at', `${year}-01-01`).lt('created_at', `${year + 1}-01-01`); assert.ifError(counted.error);
+  assert.match(statsHtml, new RegExp(`<strong>${counted.count}</strong><small>Citazioni</small>`));
+  const statsGuest = await fetch(`${app}/stats`, { redirect: 'manual' }); assert.equal(statsGuest.headers.get('location'), '/login');
   assert.equal((await fetch(`${app}/quotes`, { redirect: 'manual' })).headers.get('location'), '/login');
   console.log('PASS: quotes, one vote per member, permissions and private access');
 } finally {
