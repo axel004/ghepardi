@@ -1,8 +1,30 @@
-import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { MemberForm } from './member-form';
+import { Back, Head, Row, Screen, Slide } from '@/components/ui';
+
+export const metadata = { title: 'Admin' };
 
 export default async function AdminPage() {
   await requireAdmin();
-  return <main className="panel"><p className="eyebrow">🐆 GHEPARDI</p><h1>Pannello admin</h1><p><Link href="/admin/posts">📰 Gestisci post →</Link></p><p><Link href="/admin/gallery">📸 Gestisci gallery →</Link></p><p><Link href="/polls">🗳 Gestisci sondaggi →</Link></p><p><Link href="/rankings">🏆 Gestisci classifiche →</Link></p><p><Link href="/events">📅 Gestisci eventi →</Link></p><p><Link href="/monthly">🌙 Gestisci format mensili →</Link></p><p><Link href="/awards">🏅 Gestisci premi →</Link></p><p><Link href="/hall-of-fame">🏆 Gestisci Hall of Fame →</Link></p><p><Link href="/hall-of-shame">🤡 Gestisci Hall of Shame →</Link></p><h2>Crea un membro</h2><p>Crea un account per un amico e consegnagli le credenziali temporanee.</p><MemberForm /><p><Link href="/">← Torna alla home</Link></p></main>;
+  return (
+    <Screen>
+      <Back href="/altro">Altro</Back>
+      <Head title="Pannello admin">Post, album, membri e tutto ciò che solo tu puoi toccare.</Head>
+      <Slide title="Contenuti" shape="a">
+        <Row when="Post" title="Gestisci post" href="/admin/posts" />
+        <Row when="Foto" title="Gestisci gallery" href="/admin/gallery" />
+        <Row when="Voto" title="Gestisci sondaggi" href="/polls" />
+        <Row when="Punti" title="Gestisci classifiche" href="/rankings" />
+        <Row when="Data" title="Gestisci eventi" href="/events" />
+        <Row when="Mese" title="Gestisci format mensili" href="/monthly" />
+        <Row when="Anno" title="Gestisci premi" href="/awards" />
+        <Row when="Gloria" title="Gestisci Hall of Fame" href="/hall-of-fame" />
+        <Row when="Onta" title="Gestisci Hall of Shame" href="/hall-of-shame" />
+      </Slide>
+      <Slide title="Crea un membro" shape="b" tone="light">
+        <p className="foot">Crea un account per un amico e consegnagli le credenziali temporanee.</p>
+        <MemberForm />
+      </Slide>
+    </Screen>
+  );
 }

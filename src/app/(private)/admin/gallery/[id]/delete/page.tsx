@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Back, Head, Screen } from '@/components/ui';
 import { notFound } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
 import { isUuid } from '@/lib/posts';
@@ -10,5 +10,13 @@ export default async function ConfirmDeleteAlbum({ params }: { params: Promise<{
   const album = await supabase.from('albums').select('id,title').eq('id', id).maybeSingle();
   if (album.error) throw new Error('Impossibile caricare l’album');
   if (!album.data) notFound();
-  return <main className="panel"><h1>Eliminare l’album?</h1><p>Puoi eliminare “{album.data.title}” solo se è vuoto.</p><form action={deleteAlbum}><input type="hidden" name="id" value={id} /><button>Elimina album</button></form><p><Link href={`/admin/gallery/${id}`}>Annulla</Link></p></main>;
+  return (
+    <Screen>
+      <Back href={`/admin/gallery/${id}`}>Annulla</Back>
+      <Head title="Eliminare l’album?" />
+      <article className="pane"><p className="prose">Puoi eliminare “{album.data.title}” solo se è vuoto.</p>
+        <form action={deleteAlbum}><input type="hidden" name="id" value={id} /><div className="btn-row"><button className="btn">Elimina album</button></div></form></article>
+    </Screen>
+  );
+
 }

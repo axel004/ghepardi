@@ -2,12 +2,27 @@
 import Link from 'next/link';
 import { requireReadyMember } from '@/lib/auth';
 import { pageNumber } from '@/lib/posts';
+import { Empty, Head, Pager, Row, Screen, Slide } from '@/components/ui';
+
+export const metadata = { title: 'Post' };
+const category: Record<string, string> = { news: 'News', stories: 'Storia', cronache: 'Cronaca', viaggi: 'Viaggio', serate: 'Serata', meme: 'Meme', speciali: 'Speciale' };
 
 export default async function Posts({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { supabase, profile } = await requireReadyMember();
   const page = pageNumber((await searchParams).page);
   const { data: posts, error } = await supabase.from('posts').select('id,title,slug,content,category,cover_photo_id').eq('status', 'published').order('published_at', { ascending: false }).order('id', { ascending: false }).range((page - 1) * 20, page * 20);
-  return <main className="panel section-panel"><p className="eyebrow">📰 LE STORIE DEL BRANCO</p><h1>Post</h1><p>Cronache, meme e momenti da ricordare.</p>{profile.role === 'admin' && <p><Link href="/admin/posts/new">+ Scrivi un post</Link></p>}
-    {error ? <p className="error">Impossibile caricare i post. Riprova.</p> : !posts?.length ? <p>Ancora nessun post. Il primo ricordo aspetta solo voi.</p> : posts.slice(0, 20).map((post) => <article className="post-card" key={post.id}><p className="eyebrow">{post.category}</p><h2><Link href={`/posts/${post.slug}`}>{post.title}</Link></h2>{post.cover_photo_id && <Link href={`/posts/${post.slug}`}><img className="post-image" src={`/media/${post.cover_photo_id}?size=thumb`} alt={`Copertina: ${post.title}`} loading="lazy" /></Link>}<p className="excerpt">{post.content}</p><Link href={`/posts/${post.slug}`}>Leggi e commenta →</Link></article>)}
-    <nav className="pagination" aria-label="Pagine dei post">{page > 1 && <Link href={`/posts?page=${page - 1}`}>← Più recenti</Link>}{posts && posts.length > 20 && <Link href={`/posts?page=${page + 1}`}>Più vecchi →</Link>}</nav></main>;
+  const shown = posts?.slice(0, 20) ?? [];
+  return (
+    <Screen>
+      <Head title="Post" tick={`Pag. ${page}`}>Cronache, meme e momenti da ricordare.</Head>
+      {profile.role === 'admin' && <p className="pager"><Link href="/admin/posts/new" className="btn" transitionTypes={['nav-forward']}>Scrivi un post</Link></p>}
+      {error ? <Empty title="Non si carica">Impossibile caricare i post. Riprova.</Empty>
+        : !shown.length ? <Empty title="Ancora nessun post">Il primo ricordo aspetta solo voi.</Empty>
+        : <Slide shape="a">{shown.map(post => (
+          <Row key={post.id} href={`/posts/${post.slug}`} title={post.title} sub={post.content.slice(0, 160)} clamp
+            when={post.cover_photo_id ? <img src={`/media/${post.cover_photo_id}?size=thumb`} alt="" width={64} height={48} loading="lazy" style={{ width: 64, height: 48, objectFit: 'cover' }} /> : category[post.category] ?? post.category} />
+        ))}</Slide>}
+      <Pager prev={page > 1 ? `/posts?page=${page - 1}` : undefined} next={posts && posts.length > 20 ? `/posts?page=${page + 1}` : undefined} />
+    </Screen>
+  );
 }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
 import { isUuid, pageNumber } from '@/lib/posts';
+import { Back, Empty, Head, Pager, Screen, dateIt } from '@/components/ui';
 
 export default async function Album({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ page?: string }> }) {
   const { supabase, profile } = await requireReadyMember(), { id } = await params;
@@ -12,7 +13,19 @@ export default async function Album({ params, searchParams }: { params: Promise<
   if (!album) notFound();
   const page = pageNumber((await searchParams).page);
   const photos = await supabase.from('photos').select('id,caption').eq('album_id', id).order('created_at', { ascending: false }).order('id', { ascending: false }).range((page - 1) * 24, page * 24);
-  return <main className="panel"><p><Link href="/gallery">← Gallery</Link></p><h1>{album.title}</h1>{album.event_date && <p>{album.event_date.split('-').reverse().join('/')}</p>}{profile.role === 'admin' && <p><Link href={`/admin/gallery/${id}`}>Aggiungi o gestisci foto</Link></p>}
-    {photos.error ? <p className="error">Impossibile caricare le foto.</p> : !photos.data?.length ? <p>Questo album è ancora vuoto.</p> : <div className="photo-grid">{photos.data.slice(0, 24).map((photo) => <a key={photo.id} href={`/media/${photo.id}`} target="_blank" rel="noreferrer"><img src={`/media/${photo.id}?size=thumb`} alt={photo.caption || `Foto di ${album.title}`} loading="lazy" /></a>)}</div>}
-    <nav className="pagination" aria-label="Pagine delle foto">{page > 1 && <Link href={`/gallery/${id}?page=${page - 1}`}>← Precedenti</Link>}{photos.data && photos.data.length > 24 && <Link href={`/gallery/${id}?page=${page + 1}`}>Successive →</Link>}</nav></main>;
+  return (
+    <Screen>
+      <Back href="/gallery">Gallery</Back>
+      <Head title={album.title} tick={album.event_date ? dateIt(album.event_date) : undefined} />
+      {profile.role === 'admin' && <p className="pager"><Link href={`/admin/gallery/${id}`} className="btn ghost">Aggiungi o gestisci foto</Link></p>}
+      {photos.error ? <Empty title="Non si carica">Impossibile caricare le foto.</Empty>
+        : !photos.data?.length ? <Empty title="Album vuoto">Questo album è ancora vuoto.</Empty>
+        : <div className="photos">{photos.data.slice(0, 24).map(photo => (
+          <a key={photo.id} href={`/media/${photo.id}`} target="_blank" rel="noreferrer" aria-label={photo.caption || `Apri foto di ${album.title}`}>
+            <img src={`/media/${photo.id}?size=thumb`} alt={photo.caption || `Foto di ${album.title}`} loading="lazy" />
+          </a>
+        ))}</div>}
+      <Pager prev={page > 1 ? `/gallery/${id}?page=${page - 1}` : undefined} next={photos.data && photos.data.length > 24 ? `/gallery/${id}?page=${page + 1}` : undefined} prevLabel="Precedenti" nextLabel="Successive" />
+    </Screen>
+  );
 }

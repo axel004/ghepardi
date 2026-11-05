@@ -5,6 +5,9 @@ import { requireReadyMember } from '@/lib/auth';
 import { emojis, isUuid, pageNumber } from '@/lib/posts';
 import { addComment, deleteComment, reactToPost } from '../actions';
 import { MentionText, mentionNames } from '../mentions';
+import { Back, Empty, Notice, Pager, Screen, Slide, stamp } from '@/components/ui';
+
+const category: Record<string, string> = { news: 'News', stories: 'Storia', cronache: 'Cronaca', viaggi: 'Viaggio', serate: 'Serata', meme: 'Meme', speciali: 'Speciale' };
 
 export default async function PostPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ error?: string; page?: string; focus?: string }> }) {
   const { supabase, profile } = await requireReadyMember(), { slug } = await params;
@@ -29,19 +32,72 @@ export default async function PostPage({ params, searchParams }: { params: Promi
     names.length ? supabase.from('profiles').select('username').in('username', names) : Promise.resolve({ data: [], error: null }),
   ]);
   const knownNames = new Set((namesResult.data ?? []).flatMap(person => person.username ? [person.username] : []));
-  return <main className="panel"><p><Link href="/">← Home</Link></p><p className="eyebrow">{post.category}{post.status === 'draft' && ' · BOZZA'}</p><h1><MentionText text={post.title} names={knownNames} /></h1>{post.cover_photo_id && <img className="post-image" src={`/media/${post.cover_photo_id}`} alt={`Copertina: ${post.title}`} />}<div className="post-content"><MentionText text={post.content} names={knownNames} /></div>
-    {profile.role === 'admin' && <p><Link href={`/admin/posts/${post.id}`}>Modifica post</Link></p>}
-    {post.status === 'published' && <><h2>Reazioni</h2>{reactionResult.error ? <p className="error">Impossibile caricare le reaction.</p> : <div className="reactions">{emojis.map((emoji) => {
-      const selected = reactions.some((r) => r.emoji === emoji && r.user_id === profile.id), count = reactions.filter((r) => r.emoji === emoji).length;
-      return <form key={emoji} action={reactToPost}><input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="emoji" value={emoji} /><input type="hidden" name="operation" value={selected ? 'remove' : 'add'} /><button className={selected ? 'reaction selected' : 'reaction'} aria-label={`${emoji}, ${count} reazioni${selected ? ', selezionata' : ''}`} aria-pressed={selected}>{emoji} {count}</button></form>;
-    })}</div>}
-    <h2>Commenti</h2>{query.error && <p className="error" role="alert">Operazione non riuscita. Riprova.</p>}
-    <form action={addComment} className="form"><input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><label htmlFor="comment">Scrivi un commento</label><textarea id="comment" name="content" maxLength={2000} rows={3} required /><small>Per menzionare un amico scrivi @nome_utente.</small><button>Commenta</button></form>
-    {commentResult.error || focused.error ? <p className="error">Impossibile caricare i commenti.</p> : !visibleComments.length ? <p>Ancora nessun commento.</p> : visibleComments.map((comment) => {
-      const author = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
-      const parent = parentResult.data?.find(item => item.id === comment.parent_id), parentAuthor = Array.isArray(parent?.profiles) ? parent.profiles[0] : parent?.profiles;
-      return <article className="comment" id={`comment-${comment.id}`} key={comment.id}><strong>{author?.display_name || author?.username || 'Membro'}</strong>{comment.parent_id && <p><small>↳ In risposta a {parentAuthor?.display_name || parentAuthor?.username || 'un commento'}</small></p>}<p className="post-content"><MentionText text={comment.content} names={knownNames} /></p><details><summary>Rispondi</summary><form action={addComment} className="form"><input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="parent_id" value={comment.id} /><label htmlFor={`reply-${comment.id}`}>La tua risposta</label><textarea id={`reply-${comment.id}`} name="content" maxLength={2000} rows={2} required /><small>Puoi menzionare un amico con @nome_utente.</small><button>Invia risposta</button></form></details>{(comment.user_id === profile.id || profile.role === 'admin') && <form action={deleteComment}><input type="hidden" name="id" value={comment.id} /><input type="hidden" name="slug" value={slug} /><button className="text-button">Elimina commento</button></form>}</article>;
-    })}
-    <nav className="pagination" aria-label="Pagine dei commenti">{page > 1 && <Link href={`/posts/${slug}?page=${page - 1}`}>← Più recenti</Link>}{comments.length > 20 && <Link href={`/posts/${slug}?page=${page + 1}`}>Più vecchi →</Link>}</nav></>}
-  </main>;
+  return (
+    <Screen>
+      <Back href="/posts">Post</Back>
+      <header className="plate title">
+        <span className="lbl">{category[post.category] ?? post.category}{post.status === 'draft' ? ' · Bozza' : ''}</span>
+        <h1><MentionText text={post.title} names={knownNames} /></h1>
+      </header>
+      {post.cover_photo_id && <img className="hero-img" src={`/media/${post.cover_photo_id}`} alt={`Copertina: ${post.title}`} />}
+      <article className="pane"><div className="prose"><MentionText text={post.content} names={knownNames} /></div></article>
+      {profile.role === 'admin' && <p className="pager"><Link href={`/admin/posts/${post.id}`} className="btn ghost">Modifica post</Link></p>}
+      {post.status === 'published' && (
+        <>
+          <Slide title="Reazioni" shape="b">
+            {reactionResult.error ? <p className="foot">Impossibile caricare le reazioni.</p> : (
+              <div className="chips" style={{ padding: '6px 0 8px' }}>
+                {emojis.map(emoji => {
+                  const selected = reactions.some(r => r.emoji === emoji && r.user_id === profile.id), count = reactions.filter(r => r.emoji === emoji).length;
+                  return (
+                    <form key={emoji} action={reactToPost}>
+                      <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="emoji" value={emoji} /><input type="hidden" name="operation" value={selected ? 'remove' : 'add'} />
+                      <button className="chip" style={selected ? { background: 'var(--glass-accent)', color: '#1e2428', borderColor: 'var(--glass-accent)' } : undefined} aria-label={`${emoji}, ${count} reazioni${selected ? ', selezionata' : ''}`} aria-pressed={selected}>{emoji} {count}</button>
+                    </form>
+                  );
+                })}
+              </div>
+            )}
+          </Slide>
+          <div className="sec-h"><h2>Commenti</h2></div>
+          {query.error && <Notice kind="err">Operazione non riuscita. Riprova.</Notice>}
+          <Slide shape="a" tone="light">
+            <form action={addComment} className="form">
+              <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} />
+              <label htmlFor="comment">Scrivi un commento</label>
+              <textarea id="comment" name="content" maxLength={2000} rows={3} required />
+              <small>Per menzionare un amico scrivi @nome_utente.</small>
+              <div className="btn-row"><button className="btn">Commenta</button></div>
+            </form>
+          </Slide>
+          {commentResult.error || focused.error ? <Empty title="Non si carica">Impossibile caricare i commenti.</Empty>
+            : !visibleComments.length ? <Empty title="Ancora nessun commento">Rompi il ghiaccio.</Empty>
+            : visibleComments.map(comment => {
+              const author = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
+              const parent = parentResult.data?.find(item => item.id === comment.parent_id), parentAuthor = Array.isArray(parent?.profiles) ? parent.profiles[0] : parent?.profiles;
+              return (
+                <article className="pane" id={`comment-${comment.id}`} key={comment.id}>
+                  <p className="meta">{author?.display_name || author?.username || 'Membro'} · {stamp(comment.created_at)}</p>
+                  {comment.parent_id && <p className="meta">↳ In risposta a {parentAuthor?.display_name || parentAuthor?.username || 'un commento'}</p>}
+                  <p className="prose"><MentionText text={comment.content} names={knownNames} /></p>
+                  <details>
+                    <summary>Rispondi</summary>
+                    <form action={addComment} className="form">
+                      <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="parent_id" value={comment.id} />
+                      <label htmlFor={`reply-${comment.id}`}>La tua risposta</label>
+                      <textarea id={`reply-${comment.id}`} name="content" maxLength={2000} rows={2} required />
+                      <div className="btn-row"><button className="btn">Invia risposta</button></div>
+                    </form>
+                  </details>
+                  {(comment.user_id === profile.id || profile.role === 'admin') && (
+                    <form action={deleteComment}><input type="hidden" name="id" value={comment.id} /><input type="hidden" name="slug" value={slug} /><button className="text-btn">Elimina commento</button></form>
+                  )}
+                </article>
+              );
+            })}
+          <Pager prev={page > 1 ? `/posts/${slug}?page=${page - 1}` : undefined} next={comments.length > 20 ? `/posts/${slug}?page=${page + 1}` : undefined} />
+        </>
+      )}
+    </Screen>
+  );
 }

@@ -28,7 +28,7 @@ export function Screen({ children, label }: { children: ReactNode; label?: strin
   );
 }
 
-export function Head({ title, tick, children }: { title: string; tick?: string; children?: ReactNode }) {
+export function Head({ title, tick, children }: { title: string; tick?: ReactNode; children?: ReactNode }) {
   return <header className="head"><h1><span>{title}</span>{tick && <span className="tick">{tick}</span>}</h1>{children && <p>{children}</p>}</header>;
 }
 
