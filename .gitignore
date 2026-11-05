@@ -43,3 +43,11 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# impeccable scratch
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/*.txt
+.impeccable/*.json
+.impeccable/review/
+.impeccable/build/
