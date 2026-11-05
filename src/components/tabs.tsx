@@ -19,7 +19,7 @@ export function Tabs() {
   return (
     <nav className="tabs" aria-label="Navigazione principale">
       {tabs.map(tab => (
-        <Link key={tab.href} href={tab.href} aria-current={active === tab.href ? 'page' : undefined} transitionTypes={['nav-forward']}>
+        <Link key={tab.href} href={tab.href} aria-current={active === tab.href ? 'page' : undefined} transitionTypes={[tabs.findIndex(t => t.href === tab.href) > tabs.findIndex(t => t.href === active) ? 'nav-forward' : 'nav-back']}>
           <Icon name={tab.icon} /><span>{tab.label}</span>
         </Link>
       ))}

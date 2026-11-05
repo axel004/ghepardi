@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireMember } from '@/lib/auth';
 import { Icon } from '@/components/ui';
 import { Tabs } from '@/components/tabs';
+import { PullRefresh } from '@/components/pull-refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
           <Icon name="bell" />{!!count && <span className="n">{count}</span>}
         </Link>
       </header>
+      <PullRefresh />
       {children}
       <Tabs />
     </div>

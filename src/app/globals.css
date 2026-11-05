@@ -323,3 +323,16 @@ details > summary::after { padding-left: 12px; }
 .text-btn { background: none; border: 0; padding: 0; min-height: var(--touch); display: inline-flex; align-items: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-weight: 600; color: inherit; }
 .plate.title { margin-top: 4px; }
 .plate.title h1 { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+
+/* pull-to-refresh disegnato: niente comportamento nativo sovrapposto */
+html, body { overscroll-behavior-y: contain; }
+.pull { position: fixed; top: calc(56px + env(safe-area-inset-top)); left: 0; right: 0; z-index: 5; display: flex; justify-content: center; pointer-events: none; will-change: transform, opacity; }
+.pull .lbl { background: var(--plate); color: var(--plate-ink); padding: 8px 18px; }
+
+/* scheletro di caricamento: solo opacity */
+.skel { margin: 0 var(--gut) var(--gap); height: 68px; background: var(--glass); opacity: .35; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes breathe { 50% { opacity: .15; } }
+  .skel { animation: breathe 1.2s ease-in-out infinite; }
+  .skel:nth-child(2) { animation-delay: .15s; } .skel:nth-child(3) { animation-delay: .3s; }
+}
