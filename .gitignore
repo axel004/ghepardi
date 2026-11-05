@@ -51,3 +51,4 @@ next-env.d.ts
 .impeccable/*.json
 .impeccable/review/
 .impeccable/build/
+.impeccable/dev.log

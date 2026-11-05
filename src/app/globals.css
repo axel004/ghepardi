@@ -284,7 +284,7 @@ details[open] > summary::after { content: "–"; }
 
 /* ----- movimento: solo transform e opacity, e solo se concesso ----- */
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes slide-in { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+  @keyframes slide-in { from { opacity: 0; transform: translate(-18px, 2.5px); } to { opacity: 1; transform: none; } }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(var(--v, 0)); } }
   .screen > * { animation: slide-in 420ms var(--ease) backwards; }
@@ -299,10 +299,10 @@ details[open] > summary::after { content: "–"; }
   ::view-transition-new(.nav-forward) { animation: 320ms var(--ease) 60ms both vt-in-right; }
   ::view-transition-old(.nav-back) { animation: 180ms cubic-bezier(.4, 0, 1, 1) both vt-out-right; }
   ::view-transition-new(.nav-back) { animation: 320ms var(--ease) 60ms both vt-in-left; }
-  @keyframes vt-out-left { to { opacity: 0; transform: translateX(-36px); } }
-  @keyframes vt-in-right { from { opacity: 0; transform: translateX(36px); } }
-  @keyframes vt-out-right { to { opacity: 0; transform: translateX(36px); } }
-  @keyframes vt-in-left { from { opacity: 0; transform: translateX(-36px); } }
+  @keyframes vt-out-left { to { opacity: 0; transform: translate(-36px, 5px); } }
+  @keyframes vt-in-right { from { opacity: 0; transform: translate(36px, -5px); } }
+  @keyframes vt-out-right { to { opacity: 0; transform: translate(36px, -5px); } }
+  @keyframes vt-in-left { from { opacity: 0; transform: translate(-36px, 5px); } }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -341,3 +341,21 @@ html, body { overscroll-behavior-y: contain; }
 .chip[aria-current="page"] { background: var(--bed-ink); color: var(--bed); border-color: var(--bed-ink); text-decoration: none; }
 a.chip { text-decoration: none; color: var(--bed-ink); }
 .foot a, .pane p > b > a, .slide p > a { display: inline-flex; align-items: center; min-height: var(--touch); }
+
+/* riga di tacche: dove sei nella pagina. La muove lo scroll, sul compositor. */
+.bar { position: sticky; }
+.rail { position: absolute; left: 0; right: 0; bottom: -8px; height: 6px; pointer-events: none; overflow: hidden; }
+.rail::before { content: ""; position: absolute; inset: 0; background: var(--bed-ink); opacity: .55;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Crect width='1.5' height='6'/%3E%3C/svg%3E") repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Crect width='1.5' height='6'/%3E%3C/svg%3E") repeat-x; }
+.rail i { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 18%; background: var(--bed-ink); }
+@supports (animation-timeline: scroll()) {
+  .rail i { display: block; animation: rail linear both; animation-timeline: scroll(root); }
+  @keyframes rail { to { transform: translateX(455.55%); } }
+}
+
+/* la "luce" va su ciò che tocchi: gli altri piani si abbassano */
+.slide:has(a.row:active) a.row:not(:active) { opacity: .45; }
+
+.chip-mark { width: 24px; height: 22px; --src: url(/brand/mark.png); }
+.slide:not(.light) .chip[aria-pressed="true"] { background: var(--glass-accent); color: #1e2428; border-color: var(--glass-accent); }

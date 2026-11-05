@@ -18,6 +18,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
         <Link href="/notifications" className="bell" aria-label={count ? `Notifiche: ${count} non lette` : 'Notifiche'} transitionTypes={['nav-forward']}>
           <Icon name="bell" />{!!count && <span className="n">{count}</span>}
         </Link>
+        <div className="rail" aria-hidden="true"><i /></div>
       </header>
       <PullRefresh />
       {children}

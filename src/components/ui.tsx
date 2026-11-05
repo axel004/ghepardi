@@ -13,9 +13,14 @@ const paths = {
   next: 'M9 5l7 7-7 7',
   plus: 'M12 5v14M5 12h14',
   lock: 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  laugh: 'M12 3a9 9 0 1 0 .01 0M7 10l2.5-1.5M17 10l-2.5-1.5M7.5 14h9a4.5 4.5 0 0 1-9 0z',
+  skull: 'M5 11a7 7 0 0 1 14 0c0 2.5-1 4-2.5 5v4h-9v-4C6 15 5 13.5 5 11zM8.5 10.5h2v2h-2zM13.5 10.5h2v2h-2zM10.5 20v-2.5M13.5 20v-2.5',
+  flame: 'M12 3c1 3.5 5 5.5 5 10.5a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.5 2 2.5 1-2 .5-5.5 1-8.5z',
+  clown: 'M12 7a7 7 0 1 0 .01 0M6.5 9.5A3 3 0 0 1 4 4.5M17.5 9.5A3 3 0 0 0 20 4.5M9 12h.01M15 12h.01M11 15h2v2h-2zM8 18c2.5 1.5 5.5 1.5 8 0',
 } as const;
 
-export function Icon({ name }: { name: keyof typeof paths }) {
+export type IconName = keyof typeof paths;
+export function Icon({ name }: { name: IconName }) {
   return <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
 

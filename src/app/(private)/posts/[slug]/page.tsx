@@ -2,10 +2,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
-import { emojis, isUuid, pageNumber } from '@/lib/posts';
+import { emojis, isUuid, pageNumber, reactionMeta } from '@/lib/posts';
 import { addComment, deleteComment, reactToPost } from '../actions';
 import { MentionText, mentionNames } from '../mentions';
-import { Back, Empty, Notice, Pager, Screen, Slide, stamp } from '@/components/ui';
+import { Back, Empty, Icon, Notice, Pager, Screen, Slide, stamp } from '@/components/ui';
 
 const category: Record<string, string> = { news: 'News', stories: 'Storia', cronache: 'Cronaca', viaggi: 'Viaggio', serate: 'Serata', meme: 'Meme', speciali: 'Speciale' };
 
@@ -52,7 +52,7 @@ export default async function PostPage({ params, searchParams }: { params: Promi
                   return (
                     <form key={emoji} action={reactToPost}>
                       <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="emoji" value={emoji} /><input type="hidden" name="operation" value={selected ? 'remove' : 'add'} />
-                      <button className="chip" style={selected ? { background: 'var(--glass-accent)', color: '#1e2428', borderColor: 'var(--glass-accent)' } : undefined} aria-label={`${emoji}, ${count} reazioni${selected ? ', selezionata' : ''}`} aria-pressed={selected}>{emoji} {count}</button>
+                      <button className="chip" aria-label={`${reactionMeta[emoji].label}, ${count} ${count === 1 ? 'reazione' : 'reazioni'}${selected ? ', la tua' : ''}`} aria-pressed={selected}>{reactionMeta[emoji].icon === 'mark' ? <span className="mask chip-mark" aria-hidden="true" /> : <Icon name={reactionMeta[emoji].icon} />}<span className="tnum">{count}</span></button>
                     </form>
                   );
                 })}
