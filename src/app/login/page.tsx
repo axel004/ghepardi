@@ -8,7 +8,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const message = error === 'config' ? 'Configura Supabase per accedere.' : error === 'access' ? 'Accesso non disponibile. Contatta un amministratore.' : error === 'invite' ? 'Invito scaduto o non valido. Contatta un amministratore.' : error ? 'Email o password non valide.' : '';
   return (
     <main className="login" id="main">
-      <span className="mask logo" role="img" aria-label="Ghepardi" />
+      <h1 className="sr">Ghepardi, accesso al club</h1>
+      <span className="mask logo" aria-hidden="true" />
       <p>La memoria del branco, in un posto solo. Si entra solo su invito.</p>
       {message && <div className="notice err" role="alert"><b>Non riuscito.</b><span>{message}</span></div>}
       <section className="slide a" aria-label="Accesso">

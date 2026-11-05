@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const left = next ? daysTo(next.event_date, today) : 0;
   return (
     <Screen>
-      <p className="dateline">{dateline}</p>
+      <h1 className="dateline">{dateline}</h1>
       <div style={{ height: 14 }} />
       <Slide title="Le ultime dal branco" shape="a">
         {posts.error ? <p className="foot">Impossibile caricare i post. Riprova più tardi.</p>

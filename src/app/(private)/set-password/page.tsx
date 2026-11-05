@@ -6,7 +6,7 @@ export default async function SetPassword({ searchParams }: { searchParams: Prom
   const { error } = await searchParams;
   return (
     <main className="login" id="main">
-      <span className="mask w" role="img" aria-label="Ghepardi" />
+      <span className="mask w" aria-hidden="true" />
       <h1 className="lbl">Prima di entrare: scegli una password</h1>
       <p>Quella temporanea vale una volta sola. Usa almeno 8 caratteri.</p>
       {error && <div className="notice err" role="alert"><b>Non riuscito.</b><span>Password non valida o salvataggio non riuscito.</span></div>}

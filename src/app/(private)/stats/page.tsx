@@ -33,7 +33,7 @@ export default async function Stats({ searchParams }: { searchParams: Promise<{ 
       <Head title={selectedYear ? `Il ${selectedYear}` : 'Statistiche'}>{selectedYear ? 'Un piccolo riepilogo del vostro anno insieme.' : 'Da quando il club è online, senza inventarsi niente.'}</Head>
       <nav className="chips" style={{ padding: '0 var(--gut) var(--gap)' }} aria-label="Periodo delle statistiche">
         {[['/stats', 'Sempre', !selectedYear], [`/stats?year=${currentYear}`, String(currentYear), selectedYear === currentYear], [`/stats?year=${currentYear - 1}`, String(currentYear - 1), selectedYear === currentYear - 1]].map(([href, label, on]) => (
-          <Link key={href as string} href={href as string} className="chip" aria-pressed={!!on} aria-current={on ? 'true' : undefined}>{label as string}</Link>
+          <Link key={href as string} href={href as string} className="chip" aria-current={on ? 'page' : undefined}>{label as string}</Link>
         ))}
       </nav>
       <Slide shape="a">
