@@ -2,24 +2,73 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { requireReadyMember } from '@/lib/auth';
+import { Mark, Row, Screen, SectionHead, Slide, dayMonth } from '@/components/ui';
+
+const romeToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const daysTo = (iso: string, from: string) => Math.round((Date.parse(`${iso}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
+const category: Record<string, string> = { news: 'News', stories: 'Storia', cronache: 'Cronaca', viaggi: 'Viaggio', serate: 'Serata', meme: 'Meme', speciali: 'Speciale' };
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { profile, supabase } = await requireReadyMember();
   if (!profile.username || !profile.display_name) redirect('/profile');
   const { page } = await searchParams;
   if (page && /^\d{1,6}$/.test(page)) redirect(`/posts?page=${page}`);
-  const [posts, albums, members] = await Promise.all([
+  const today = romeToday();
+  const [posts, albums, events, polls, mine, quotes] = await Promise.all([
     supabase.from('posts').select('id,title,slug,content,category,cover_photo_id').eq('status', 'published').order('published_at', { ascending: false }).order('id', { ascending: false }).limit(3),
     supabase.from('albums').select('id,title,event_date,photos(id,created_at)').order('created_at', { ascending: false }).order('created_at', { referencedTable: 'photos', ascending: false }).limit(1, { referencedTable: 'photos' }).limit(3),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('events').select('id,title,event_date,event_time,location').gte('event_date', today).order('event_date', { ascending: true }).order('event_time', { ascending: true, nullsFirst: true }).limit(2),
+    supabase.from('polls').select('id,question,closes_on,closed').eq('closed', false).order('created_at', { ascending: false }).limit(5),
+    supabase.from('poll_votes').select('poll_id').eq('user_id', profile.id),
+    supabase.from('quotes').select('id,content,speaker').order('created_at', { ascending: false }).limit(1),
   ]);
-  const latest = posts.data?.[0];
-  return <main className="dashboard"><section className="dashboard-hero"><div><p className="eyebrow">🐆 IL TUO CLUB PRIVATO</p><h1>Ciao {profile.display_name},<br /><span>benvenuto nel branco.</span></h1><p>Storie, foto e momenti che meritano di restare.</p><div className="hero-actions"><Link className="button-link" href="/posts">Scopri i post <span>↗</span></Link><Link className="button-link subtle" href="/gallery">Sfoglia la gallery</Link></div></div><div className="hero-mark" aria-hidden="true"><span>🐆</span><small>PRIVATE<br />BY NATURE.</small></div></section>
-    <section className="quick-grid" aria-label="Esplora il club"><Link className="quick-card" href="/activity"><span>🐾</span><strong>Attività</strong><small>Le novità del branco</small><b>↗</b></Link><Link className="quick-card" href="/notifications"><span>🔔</span><strong>Notifiche</strong><small>Menzioni e risposte</small><b>↗</b></Link><Link className="quick-card" href="/posts"><span>📰</span><strong>Post</strong><small>Le storie del gruppo</small><b>↗</b></Link><Link className="quick-card" href="/gallery"><span>📸</span><strong>Gallery</strong><small>Foto e ricordi</small><b>↗</b></Link><Link className="quick-card" href="/polls"><span>🗳️</span><strong>Sondaggi</strong><small>La parola al branco</small><b>↗</b></Link><Link className="quick-card" href="/rankings"><span>🏆</span><strong>Classifiche</strong><small>Gloria e disonore</small><b>↗</b></Link><Link className="quick-card" href="/events"><span>📅</span><strong>Eventi</strong><small>Si esce?</small><b>↗</b></Link><Link className="quick-card" href="/quotes"><span>💬</span><strong>Citazioni</strong><small>Le perle del branco</small><b>↗</b></Link><Link className="quick-card" href="/monthly"><span>🌙</span><strong>Format mensili</strong><small>Le nostre rubriche</small><b>↗</b></Link><Link className="quick-card" href="/awards"><span>🏅</span><strong>Premi</strong><small>I riconoscimenti</small><b>↗</b></Link><Link className="quick-card" href="/hall-of-fame"><span>🏆</span><strong>Hall of Fame</strong><small>Momenti leggendari</small><b>↗</b></Link><Link className="quick-card" href="/hall-of-shame"><span>🤡</span><strong>Hall of Shame</strong><small>Figure storiche</small><b>↗</b></Link><Link className="quick-card" href="/wrapped"><span>✨</span><strong>Wrapped</strong><small>Il vostro anno</small><b>↗</b></Link><Link className="quick-card" href="/stats"><span>📊</span><strong>Statistiche</strong><small>Il branco in numeri</small><b>↗</b></Link><Link className="quick-card" href="/members"><span>🐆</span><strong>Il branco</strong><small>{members.error ? 'I membri del club' : `${members.count ?? 0} membri nel club`}</small><b>↗</b></Link>{profile.role === 'admin' && <Link className="quick-card admin-card" href="/admin"><span>⚙️</span><strong>Admin</strong><small>Gestisci il club</small><b>↗</b></Link>}</section>
-    <div className="dashboard-columns"><section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">IL DIARIO DEL GRUPPO</p><h2>Ultime dal branco <span>✳</span></h2></div><Link href="/posts">Tutti i post →</Link></div>
-      {posts.error ? <p className="empty-card">Impossibile caricare i post. Riprova più tardi.</p> : !latest ? <div className="empty-card"><strong>Qui inizia la storia.</strong><p>Il primo post aspetta solo voi.</p>{profile.role === 'admin' && <Link href="/admin/posts/new">Scrivi il primo post →</Link>}</div> : <div className="stories-list">{posts.data?.map((post, index) => <Link className={`story-card ${index === 0 ? 'featured-story' : ''}`} href={`/posts/${post.slug}`} key={post.id}>{post.cover_photo_id && <img src={`/media/${post.cover_photo_id}?size=thumb`} alt="" loading="lazy" />}<div><small>{post.category}</small><h3>{post.title}</h3><p className="excerpt">{post.content}</p><span>Leggi la storia ↗</span></div></Link>)}</div>}</section>
-      <section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">MOMENTI DA RIVEDERE</p><h2>Gallery <span>✳</span></h2></div><Link href="/gallery">Tutti gli album →</Link></div>
-        {albums.error ? <p className="empty-card">Impossibile caricare gli album.</p> : !albums.data?.length ? <div className="empty-card"><strong>La gallery è pronta.</strong><p>Le foto migliori sono ancora da caricare.</p>{profile.role === 'admin' && <Link href="/admin/gallery">Crea un album →</Link>}</div> : <div className="album-list">{albums.data.map((album) => <Link href={`/gallery/${album.id}`} className="album-card" key={album.id}>{album.photos?.[0] ? <img src={`/media/${album.photos[0].id}?size=thumb`} alt="" loading="lazy" /> : <span className="album-placeholder">📸</span>}<div><strong>{album.title}</strong><small>{album.event_date ? album.event_date.split('-').reverse().join('/') : 'Album del branco'}</small></div><b>↗</b></Link>)}</div>}
-      {profile.role === 'admin' && <aside className="admin-shortcut"><span>⚙️</span><div><strong>Hai qualcosa da raccontare?</strong><p>Post, foto e membri sono a portata di mano.</p><Link href="/admin">Apri il pannello admin →</Link></div></aside>}</section></div>
-  </main>;
+  const voted = new Set((mine.data ?? []).map(v => v.poll_id));
+  const open = (polls.data ?? []).filter(p => !(p.closes_on && p.closes_on < today));
+  const toVote = open.filter(p => !voted.has(p.id));
+  const next = events.data?.[0];
+  const quote = quotes.data?.[0];
+  const dateline = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' }).format(new Date());
+  const left = next ? daysTo(next.event_date, today) : 0;
+  return (
+    <Screen>
+      <p className="dateline">{dateline}</p>
+      <div style={{ height: 14 }} />
+      <Slide title="Le ultime dal branco" shape="a">
+        {posts.error ? <p className="foot">Impossibile caricare i post. Riprova più tardi.</p>
+          : !posts.data?.length ? <p className="foot">Qui inizia la storia. Il primo post aspetta solo voi.</p>
+          : posts.data.map(post => <Row key={post.id} when={category[post.category] ?? post.category} title={post.title} sub={post.content.slice(0, 160)} clamp href={`/posts/${post.slug}`} />)}
+        <p className="foot"><Link href="/posts">Tutti i post →</Link></p>
+      </Slide>
+      {next && (
+        <Link href="/events" className="plate" transitionTypes={['nav-forward']}>
+          <span className="lbl">Prossimo evento · {left === 0 ? 'oggi' : left === 1 ? 'domani' : `tra ${left} giorni`}</span>
+          <strong>{next.title}</strong>
+          <span>{dayMonth(next.event_date)}{next.event_time ? ` · ${next.event_time.slice(0, 5)}` : ''}{next.location ? ` · ${next.location}` : ''}</span>
+        </Link>
+      )}
+      <Slide title="Il tuo voto" shape="b" tone="light">
+        {polls.error || mine.error ? <p className="foot">Impossibile caricare i sondaggi.</p>
+          : toVote.length ? toVote.slice(0, 3).map(p => <Row key={p.id} when="Da votare" title={p.question} sub={p.closes_on ? `Chiude il ${dayMonth(p.closes_on)}` : 'Votazione aperta'} href="/polls" mark={<Mark state="open" />} />)
+          : open.length ? open.slice(0, 2).map(p => <Row key={p.id} when="Votato" title={p.question} sub="Il tuo voto è segreto" href="/polls" mark={<Mark state="done" />} />)
+          : <p className="foot">Nessun sondaggio aperto. Si accettano domande scomode.</p>}
+      </Slide>
+      {quote && (
+        <section className="pane" aria-label="Citazione">
+          <p className="meta">Fuori contesto</p>
+          <blockquote className="prose">“{quote.content}”</blockquote>
+          <p><b>— {quote.speaker}</b></p>
+        </section>
+      )}
+      <SectionHead title="Foto recenti" href="/gallery" link="Gallery" />
+      <Slide shape="c">
+        {albums.error ? <p className="foot">Impossibile caricare gli album.</p>
+          : !albums.data?.length ? <p className="foot">La gallery è pronta. Le foto migliori sono ancora da caricare.</p>
+          : albums.data.map(album => (
+            <Row key={album.id} href={`/gallery/${album.id}`} title={album.title} sub={album.event_date ? dayMonth(album.event_date) : undefined}
+              when={album.photos?.[0] ? <img src={`/media/${album.photos[0].id}?size=thumb`} alt="" width={64} height={48} loading="lazy" style={{ width: 64, height: 48, objectFit: 'cover' }} /> : 'Foto'} />
+          ))}
+      </Slide>
+      {profile.role === 'admin' && <Slide shape="a" tone="light"><Row when="Admin" title="Hai qualcosa da raccontare?" sub="Post, album e membri" href="/admin" /></Slide>}
+    </Screen>
+  );
 }

@@ -1,10 +1,25 @@
 import { login } from '@/app/actions';
+import { Icon } from '@/components/ui';
+
+export const metadata = { title: 'Accedi' };
+
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   const message = error === 'config' ? 'Configura Supabase per accedere.' : error === 'access' ? 'Accesso non disponibile. Contatta un amministratore.' : error === 'invite' ? 'Invito scaduto o non valido. Contatta un amministratore.' : error ? 'Email o password non valide.' : '';
-  return <main className="panel"><div className="brand">🐆</div><p className="eyebrow">PRIVATE MEMBERS CLUB</p><h1>GHEPARDI</h1><p>La memoria del branco, in un posto solo.</p>
-    {message && <p className="error" role="alert">{message}</p>}
-    <form action={login} className="form"><label htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="email" required maxLength={254} />
-    <label htmlFor="password">Password</label><input id="password" name="password" type="password" autoComplete="current-password" required maxLength={1024} /><button>Entra nel branco</button></form>
-  </main>;
+  return (
+    <main className="login" id="main">
+      <span className="mask logo" role="img" aria-label="Ghepardi" />
+      <p>La memoria del branco, in un posto solo. Si entra solo su invito.</p>
+      {message && <div className="notice err" role="alert"><b>Non riuscito.</b><span>{message}</span></div>}
+      <section className="slide a" aria-label="Accesso">
+        <form action={login} className="form">
+          <label htmlFor="email">Email</label>
+          <input id="email" name="email" type="email" autoComplete="email" inputMode="email" required maxLength={254} />
+          <label htmlFor="password">Password</label>
+          <input id="password" name="password" type="password" autoComplete="current-password" required maxLength={1024} />
+          <div className="btn-row"><button className="btn"><Icon name="lock" />Entra nel branco</button></div>
+        </form>
+      </section>
+    </main>
+  );
 }
