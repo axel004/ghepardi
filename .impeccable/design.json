@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T00:00:00Z",
+  "title": "Design System: Ghepardi",
+  "extensions": {
+    "colorMeta": {
+      "ocra-letto": { "role": "primary", "displayName": "Ocra letto", "canonical": "#d9a21b", "tonalRamp": ["#3a2b07", "#5a430b", "#7d5d0f", "#a17813", "#d9a21b", "#e6b94f", "#f0d28a", "#f9ecc9"] },
+      "inchiostro": { "role": "primary", "displayName": "Inchiostro", "canonical": "#1e2428", "tonalRamp": ["#0f1214", "#1e2428", "#2f373d", "#454e55", "#626b72", "#8a9298", "#b5bbbf", "#e2e5e7"] },
+      "ocra-accesa": { "role": "secondary", "displayName": "Ocra accesa", "canonical": "#f0b92a", "tonalRamp": ["#3f2f06", "#604809", "#86640d", "#b08512", "#f0b92a", "#f4cb60", "#f8dd96", "#fcf0d0"] },
+      "vermiglio": { "role": "tertiary", "displayName": "Vermiglio", "canonical": "#b5391f", "tonalRamp": ["#32100a", "#551b0f", "#7a2715", "#9c321b", "#b5391f", "#d26650", "#e59e8f", "#f6d9d3"] },
+      "avorio": { "role": "neutral", "displayName": "Avorio", "canonical": "#f4f0e6", "tonalRamp": ["#3b3930", "#5a574b", "#7b7767", "#9e9a88", "#c2bdab", "#dcd8c9", "#f4f0e6", "#fbfaf6"] }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Corpo", "purpose": "Tutto ciò che si legge." },
+      "title": { "displayName": "Titolo di riga", "purpose": "Stesso corpo, peso pieno." },
+      "label": { "displayName": "Etichetta", "purpose": "Colonna del tempo, titoli di vetrino, bottoni e tab, in maiuscolo." },
+      "moment": { "displayName": "Numero-notizia", "purpose": "Unica eccezione al corpo unico: solo numeri che sono già la notizia." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Curva unica per entrate, uscite e stati." },
+      { "name": "press", "value": "120ms", "purpose": "Pressione di righe, piastre, bottoni; abbassamento degli altri piani." },
+      { "name": "screen", "value": "240ms in, 140ms out", "purpose": "Scorrimento di schermata lungo l'inclinazione." },
+      { "name": "tab-indicator", "value": "220ms", "purpose": "Indicatore del tab, si sposta al tocco." },
+      { "name": "scatto", "value": "280ms", "purpose": "Solo tornando dopo 30 minuti con novità, e nell'apertura di Wrapped." }
+    ],
+    "breakpoints": [
+      { "name": "wide", "value": "700px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bottone primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Azione principale su letto o pannello.",
+      "html": "<button class=\"ds-btn\">Deposita il voto</button>",
+      "css": ".ds-btn { min-height: 44px; padding: 0 20px; background: #1e2428; color: #d9a21b; border: 2px solid #1e2428; border-radius: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-btn:active { transform: translateY(2px); } .ds-btn:focus-visible { outline: 3px solid #1e2428; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo di testo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo a corpo unico, angoli vivi.",
+      "html": "<input class=\"ds-input\" placeholder=\"Chi l'ha detta?\" />",
+      "css": ".ds-input { width: 100%; min-height: 44px; padding: 10px 12px; background: #f4f0e6; color: #1e2428; border: 2px solid #1e2428; border-radius: 0; font-size: 16px; caret-color: #b5391f; } .ds-input:focus-visible { outline: 3px solid #1e2428; outline-offset: 2px; }"
+    },
+    {
+      "name": "Vetrino con righe d'orario",
+      "kind": "custom",
+      "refersTo": "slide-dark",
+      "description": "Il piano firma: parallelogramma piatto, tempo a sinistra, contenuto dritto.",
+      "html": "<section class=\"ds-slide\"><h2>Prima ancora</h2><a class=\"ds-row\" href=\"#\"><span>Ieri</span><b>Montagna senza gambe</b></a></section>",
+      "css": ".ds-slide { padding: 8px 36px 10px 32px; background: #1e2428; color: #f4f0e6; clip-path: polygon(22px 0, 100% 0, calc(100% - 22px) 100%, 0 100%); } .ds-slide h2 { margin: 0; padding: 8px 0 6px; color: #f0b92a; font: 800 16px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; } .ds-row { display: grid; grid-template-columns: 4.6rem 1fr; gap: 12px; align-items: center; min-height: 44px; color: inherit; text-decoration: none; transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-row:active { transform: translateX(4px); } .ds-row span { font: 600 16px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #cfc9b8; }"
+    },
+    {
+      "name": "Piastra col numero-notizia",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "Un elemento inverso per schermata, con l'unica eccezione tipografica.",
+      "html": "<a class=\"ds-plate\" href=\"#\"><span class=\"ds-n\">8</span><span>giorni a <b>Cena di fine stagione</b></span></a>",
+      "css": ".ds-plate { display: flex; gap: 12px; align-items: flex-end; padding: 14px 22px 14px 28px; background: #1e2428; color: #d9a21b; text-decoration: none; clip-path: polygon(22px 0, 100% 0, calc(100% - 22px) 100%, 0 100%); } .ds-plate:focus-visible { outline: 3px solid #d9a21b; outline-offset: -8px; } .ds-n { font: 800 clamp(4rem, 22vw, 6rem)/.85 'Barlow Condensed', sans-serif; }"
+    },
+    {
+      "name": "Barra a tab",
+      "kind": "nav",
+      "description": "Cinque voci con icona ed etichetta; l'indicatore si sposta al tocco.",
+      "html": "<nav class=\"ds-tabs\"><i></i><a aria-current=\"page\" href=\"#\">Home</a><a href=\"#\">Post</a><a href=\"#\">Gallery</a><a href=\"#\">Branco</a><a href=\"#\">Altro</a></nav>",
+      "css": ".ds-tabs { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); background: #1e2428; color: #d9a21b; } .ds-tabs i { position: absolute; inset: 0 auto 0 0; width: 20%; background: #d9a21b; transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-tabs a { position: relative; display: grid; place-items: center; min-height: 64px; color: inherit; text-decoration: none; font: 600 16px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; } .ds-tabs a[aria-current=page] { color: #1e2428; }"
+    },
+    {
+      "name": "Segno di stato",
+      "kind": "chip",
+      "description": "Pieno, vuoto o barrato; inclinato per non sembrare una casella.",
+      "html": "<span class=\"ds-mark\"></span> <span class=\"ds-mark on\"></span>",
+      "css": ".ds-mark { display: inline-block; width: 22px; height: 12px; border: 2px solid #1e2428; transform: skewX(-24deg); } .ds-mark.on { background: #1e2428; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "L'orario tascabile",
+    "overview": "L'app si legge come l'orario tascabile di una compagnia aerea del 1971 steso su un tavolo luminoso: un letto ocra, vetrini tagliati in obliquo, righe d'orario. L'ocra è il colore del manto, ma il ghepardo non è mai disegnato: sta nell'inclinazione dei piani e nel ritmo secco del movimento, lunga immobilità e poi scatto.",
+    "keyCharacteristics": ["Un corpo solo, un'eccezione sola.", "Piani piatti tagliati in obliquo, contenuto sempre dritto.", "L'inclinazione porta un significato: dice se una cosa è viva.", "Nessun raggio, nessuna ombra, nessun gradiente.", "Azioni frequenti rapide, respiro solo nei momenti rari."],
+    "rules": [
+      { "name": "La Regola del Letto", "body": "La superficie è colore, non neutro con un accento: mai sostituire il letto ocra con un grigio o un bianco in light.", "section": "colors" },
+      { "name": "La Regola del Colore Mai Solo", "body": "Nessuno stato si legge dal solo colore: pieno, vuoto, barrato cambiano forma.", "section": "colors" },
+      { "name": "La Regola del Corpo Unico", "body": "Tutto ciò che si legge ha un solo corpo. Il rango viene da peso, maiuscole, inversione e filetti. Non aggiungere un secondo corpo per un titolo.", "section": "typography" },
+      { "name": "La Regola del Numero", "body": "La sola eccezione è un numero che è già la notizia. Mai una parola in corpo grande.", "section": "typography" },
+      { "name": "La Regola del Piatto", "body": "Nessuna ombra, nessuna sfocatura, nessun gradiente. Sono piani stampati, non oggetti che galleggiano.", "section": "elevation" }
+    ],
+    "dos": ["Do tenere il tempo nella colonna sinistra: è un orario, le cose hanno un quando.", "Do far nascere il rango da peso, maiuscole, inversione e filetti, nell'ordine.", "Do dare a ogni sezione speciale la sua composizione, come Wrapped e le Hall, invece di ripetere la pila di righe.", "Do tenere le animazioni delle azioni frequenti sotto i 300ms."],
+    "donts": ["Don't usare macchie disegnate, rosette, pattern a pois, ritagli a forma animale o il muso del logo ingrandito.", "Don't usare griglie di card uguali con fascia di testo.", "Don't usare crema con serif, nero con neon, card arrotondate, gradienti, ombre decorative.", "Don't usare emoji o caratteri di testo al posto delle icone: il valore salvato delle reazioni è un'emoji, ma a schermo va sempre l'icona disegnata.", "Don't introdurre un secondo corpo di testo per i titoli.", "Don't animare proprietà diverse da trasformazioni e opacità nel codice dell'app."]
+  }
+}

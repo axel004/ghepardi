@@ -55,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         <Slide title="Da votare" shape="c" tone="light" lean={soonPoll ? 'steep' : undefined}>
           {toVote.slice(0, 2).map(p => {
             const days = p.closes_on ? daysTo(p.closes_on, today) : null;
-            return <Row key={p.id} when={<Tag state="open" label="non hai ancora votato">{days === null ? 'Aperto' : days === 0 ? 'Oggi' : days === 1 ? 'Domani' : `${days} giorni`}</Tag>} title={p.question} sub="Il tuo voto resta segreto" href="/polls" />;
+            return <Row key={p.id} when={<Tag state="open" label="non hai ancora votato">{days === null ? 'Aperto' : days === 0 ? 'Oggi' : days === 1 ? 'Domani' : `${days} giorni`}</Tag>} title={p.question} sub="Voto segreto" href="/polls" />;
           })}
         </Slide>
       )}

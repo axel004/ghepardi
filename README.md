@@ -36,3 +36,7 @@ Le foto vengono convertite in JPEG e ridotte a massimo 1920 pixel sul lato maggi
 ## Preview e produzione
 
 Configurare la chiave server come secret Vercel solo negli ambienti appropriati; le chiavi pubbliche non sostituiscono le policy RLS. La preview Vercel protetta richiede un account autorizzato su Vercel; il sito di produzione consente l'accesso con le sole credenziali GHEPARDI. Le future policy per i contenuti devono controllare `private.has_changed_password()`, oltre a stato e ruolo. Il progetto Supabase è attualmente condiviso tra preview e produzione: usare solo dati di prova nelle verifiche e prevedere un ambiente separato prima di cambiamenti rischiosi. Definire e verificare un backup dei dati.
+
+## Modalità demo
+
+Per vedere le schermate senza Supabase: `GHEPARDI_DEMO=1 npx next dev -p 3347` (PowerShell: `$env:GHEPARDI_DEMO=1; npx next dev -p 3347`). Mostra dati sintetici da admin e non scrive nulla: le azioni non funzionano. Non si attiva mai fuori da `next dev`. Il linguaggio visivo è descritto in `DESIGN.md`.

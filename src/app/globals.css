@@ -30,8 +30,6 @@
   /* stato */
   --red: #b5391f;
   --red-on-glass: #ff8a6b;
-  --green: #2f6b4f;
-  --green-on-glass: #7fd1a5;
   --focus: #1e2428;
   --plate: #1e2428;
   --plate-ink: #d9a21b;
@@ -58,7 +56,6 @@
     --pane-soft: #cfc7ae;
     --pane-line: rgba(244, 240, 230, .26);
     --red: #ff8a6b;
-    --green: #7fd1a5;
     --focus: #f0b92a;
     --plate: #e8b93c;
     --plate-ink: #14120c;
@@ -287,7 +284,6 @@ details > summary::-webkit-details-marker { display: none; }
 .stat { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: var(--touch); padding: 9px 0; border-top: 1px solid var(--glass-line); }
 .stat:first-of-type { border-top: 0; }
 .stat b { font-weight: 800; font-family: var(--font-label); letter-spacing: .04em; }
-.dot { display: inline-block; background: var(--glass-accent); border-radius: 50%; vertical-align: middle; }
 
 /* ----- movimento: transform e opacity. Le azioni frequenti restano rapide; il respiro sta nei momenti rari. ----- */
 @media (prefers-reduced-motion: no-preference) {

@@ -40,7 +40,7 @@ export default async function Stats({ searchParams }: { searchParams: Promise<{ 
         {specs.map((item, i) => (
           <div className="stat" key={item.table} style={{ position: 'relative' }}>
             <span>{item.label}</span><b className="tnum">{values[i] ?? '—'}</b>
-            <i className="dot" aria-hidden="true" style={{ position: 'absolute', left: 0, bottom: -1, height: 3, width: `${((values[i] ?? 0) / max) * 100}%`, borderRadius: 0 }} />
+            <i aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 3, background: 'var(--glass-accent)', transformOrigin: 'left', transform: `scaleX(${(values[i] ?? 0) / max})` }} />
           </div>
         ))}
       </Slide>
