@@ -1,7 +1,7 @@
 import { requireReadyMember } from '@/lib/auth';
 import { pageNumber } from '@/lib/posts';
 import { markNotificationsRead } from './actions';
-import { Empty, Head, Mark, Notice, Pager, Row, Screen, Slide, stamp } from '@/components/ui';
+import { Empty, Head, Notice, Pager, Row, Screen, Slide, Tag, stamp } from '@/components/ui';
 
 export const metadata = { title: 'Notifiche' };
 
@@ -20,8 +20,7 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
           <Slide shape="a">{result.data.slice(0, 20).map(item => {
             const actor = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles, post = Array.isArray(item.posts) ? item.posts[0] : item.posts;
             return post && <Row key={item.id} href={`/posts/${post.slug}${item.comment_id ? `?focus=${item.comment_id}#comment-${item.comment_id}` : ''}`}
-              when={stamp(item.created_at)} title={post.title} sub={`${actor?.display_name || actor?.username || 'Un membro'} ${item.kind === 'reply' ? 'ha risposto al tuo commento' : 'ti ha menzionato'}`}
-              mark={<Mark state={item.read_at ? 'done' : 'open'} />} />;
+              when={<Tag state={item.read_at ? 'done' : 'open'} label={item.read_at ? 'letta' : 'non letta'}>{stamp(item.created_at)}</Tag>} title={post.title} sub={`${actor?.display_name || actor?.username || 'Un membro'} ${item.kind === 'reply' ? 'ha risposto al tuo commento' : 'ti ha menzionato'}`} />;
           })}</Slide>
         </>}
       <Pager prev={page > 1 ? `/notifications?page=${page - 1}` : undefined} next={result.data && result.data.length > 20 ? `/notifications?page=${page + 1}` : undefined} prevLabel="Più recenti" nextLabel="Più vecchie" />

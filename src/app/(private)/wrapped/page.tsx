@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
 import { requireReadyMember } from '@/lib/auth';
-import { Back, Empty, Notice, Row, Screen, Slide } from '@/components/ui';
+import { Back, Icon, Empty, Notice, Row, Screen, Slide } from '@/components/ui';
 
 export const metadata = { title: 'Wrapped' };
 
@@ -35,6 +35,9 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
   ]);
   const voteData = votes.data as { poll_votes: number; quote_votes: number; undated_votes: number } | null;
   const years = [current, current - 1, current - 2];
+  // I quattro conteggi più alti vanno in scena; a parità resta l'ordine dell'elenco.
+  const ranked = specs.map((spec, i) => ({ ...spec, value: counts[i].error ? '—' : counts[i].count ?? 0, n: counts[i].error ? -1 : counts[i].count ?? 0, i })).sort((a, b) => b.n - a.n || a.i - b.i);
+  const top = ranked.filter(item => item.n > 0).slice(0, 4), rest = ranked.filter(item => !top.includes(item));
   return (
     <Screen>
       <Back href="/altro">Altro</Back>
@@ -47,14 +50,19 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
         <b>Il vostro anno insieme</b>
         <p>Tutto quello che c’è, senza inventare niente. Scorri.</p>
       </section>
-      {specs.map((spec, i) => (
-        <section key={spec.label} className={`fact ${i % 2 === 0 ? 'ink' : ''}`}>
-          <span className="moment tnum">{counts[i].error ? '—' : counts[i].count ?? 0}</span>
-          <b>{spec.label}</b>
-          <p>{spec.line}</p>
+      {top.map((item, i) => (
+        <section key={item.label} className={`fact r${i}`}>
+          <span className="moment tnum">{item.value}</span>
+          <b>{item.label}</b>
+          <p>{item.line}</p>
         </section>
       ))}
-      <section className="fact ink">
+      {rest.length > 0 && (
+        <Slide title="E poi" shape="b" tone="light">
+          {rest.map(item => <div className="stat" key={item.label}><span><b>{item.label}</b><small>{item.line}</small></span><b className="tnum">{item.value}</b></div>)}
+        </Slide>
+      )}
+      <section className="fact ink upright">
         <span className="moment tnum">{votes.error || !voteData ? '—' : Number(voteData.poll_votes) + Number(voteData.quote_votes)}</span>
         <b>Voti con data</b>
         <p>Chi ha votato cosa non lo sa nessuno. Neanche qui.</p>
@@ -63,7 +71,7 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
       <Slide title="I premi del branco" shape="c" tone="light">
         {awards.error ? <p className="foot">Impossibile caricare i premi.</p> : !awards.data?.length ? <p className="foot">Nessun premio assegnato per questo anno.</p>
           : awards.data.slice(0, 20).map(award => { const member = Array.isArray(award.profiles) ? award.profiles[0] : award.profiles; return <Row key={award.id} when="Premio" title={award.title} sub={member?.display_name || member?.username || 'Membro non disponibile'} />; })}
-        {awards.data && awards.data.length > 20 && <p className="foot"><Link href="/awards">Vedi tutti i premi →</Link></p>}
+        {awards.data && awards.data.length > 20 && <p className="foot"><Link href="/awards">Vedi tutti i premi<Icon name="next" /></Link></p>}
       </Slide>
       <Slide title="I sondaggi chiusi" shape="a">
         {winners.error ? <p className="foot">Impossibile caricare i risultati.</p> : !winners.data?.length ? <p className="foot">Nessun sondaggio chiuso con voti per questo anno.</p>

@@ -48,7 +48,7 @@ export default async function Events({ searchParams }: { searchParams: Promise<{
       {error ? <Empty title="Non si carica">Impossibile caricare gli eventi.</Empty>
         : !data?.length ? <Empty title="Calendario vuoto">Il calendario aspetta il branco.</Empty>
         : <>
-          {upcoming.length > 0 && <Slide title="In arrivo" shape="a">{list(upcoming)}</Slide>}
+          {upcoming.length > 0 && <Slide title="In arrivo" shape="a" lean={Date.parse(`${upcoming[0].event_date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`) <= 86400000 ? 'steep' : undefined}>{list(upcoming)}</Slide>}
           {past.length > 0 && <Slide title="Già successi" shape="c" tone="light" lean="upright">{list(past)}</Slide>}
         </>}
     </Screen>

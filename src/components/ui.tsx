@@ -56,7 +56,12 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 
 export function Pager({ prev, next, prevLabel = 'Più recenti', nextLabel = 'Più vecchi' }: { prev?: string; next?: string; prevLabel?: string; nextLabel?: string }) {
   if (!prev && !next) return null;
-  return <nav className="pager" aria-label="Pagine">{prev ? <Link href={prev} transitionTypes={['nav-back']}>← {prevLabel}</Link> : <span />}{next ? <Link href={next} transitionTypes={['nav-forward']}>{nextLabel} →</Link> : <span />}</nav>;
+  return <nav className="pager" aria-label="Pagine">{prev ? <Link href={prev} transitionTypes={['nav-back']}><Icon name="back" />{prevLabel}</Link> : <span />}{next ? <Link href={next} transitionTypes={['nav-forward']}>{nextLabel}<Icon name="next" /></Link> : <span />}</nav>;
+}
+
+/** Segno di stato più etichetta, nella colonna sinistra: a destra resta il segno di navigazione. */
+export function Tag({ state, label, children }: { state: 'done' | 'open' | 'void'; label?: string; children: ReactNode }) {
+  return <span className="tag"><Mark state={state} label={label} /><span>{children}</span></span>;
 }
 
 /** Una riga d'orario: etichetta condensata, titolo, segno di stato. */
@@ -73,7 +78,7 @@ export function Slide({ children, title, tone = 'dark', shape = 'a', lean, class
 }
 
 export function SectionHead({ title, href, link }: { title: string; href?: string; link?: string }) {
-  return <div className="sec-h"><h2>{title}</h2>{href && <Link href={href} transitionTypes={['nav-forward']}>{link ?? 'Tutti'} →</Link>}</div>;
+  return <div className="sec-h"><h2>{title}</h2>{href && <Link href={href} transitionTypes={['nav-forward']}>{link ?? 'Tutti'}<Icon name="next" /></Link>}</div>;
 }
 
 export const dateIt = (iso: string) => new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`)).replace('.', '');

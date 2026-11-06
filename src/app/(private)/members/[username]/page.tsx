@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
-import { Back, Empty, Head, Row, Screen, Slide } from '@/components/ui';
+import { Back, Icon, Empty, Head, Row, Screen, Slide } from '@/components/ui';
 
 export default async function Member({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -23,7 +23,7 @@ export default async function Member({ params }: { params: Promise<{ username: s
         {awards.error ? <p className="foot">Impossibile caricare i premi.</p>
           : !awards.data?.length ? <p className="foot">Ancora nessun premio.</p>
           : awards.data.map(award => <Row key={award.id} when={String(award.award_year)} title={award.title} />)}
-        <p className="foot"><Link href="/awards">Tutti i premi →</Link></p>
+        <p className="foot"><Link href="/awards">Tutti i premi<Icon name="next" /></Link></p>
       </Slide>
     </Screen>
   );

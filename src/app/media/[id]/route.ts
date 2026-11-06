@@ -9,7 +9,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (!isUuid(id)) return new Response(null, { status: 404 });
   const { supabase } = await requireReadyMember();
-  const thumb = new URL(request.url).searchParams.get('size') === 'thumb';
+  const size = new URL(request.url).searchParams.get('size');
+  const thumb = size === 'thumb', lead = size === 'lead';
   if (demo) {
     // Immagine sintetica di prova: solo in modalità demo, mai con dati reali.
     const n = Number(id.slice(-3)), w = 1200, h = n % 3 === 0 ? 1500 : n % 3 === 1 ? 900 : 1200;
@@ -22,6 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const image = await supabase.storage.from('ghepardi-gallery').download(photo.storage_path);
   if (image.error || !image.data) return new Response(null, { status: 404 });
   const bytes = await image.data.arrayBuffer();
-  const data = thumb ? await sharp(Buffer.from(bytes)).resize({ width: 600, height: 600, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer() : bytes;
+  const box = thumb ? 600 : lead ? 1200 : 0;
+  const data = box ? await sharp(Buffer.from(bytes)).resize({ width: box, height: box, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: box === 600 ? 75 : 78 }).toBuffer() : bytes;
   return new Response(data, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' } });
 }
