@@ -1,6 +1,7 @@
 import { requireReadyMember } from '@/lib/auth';
 import { createQuote, deleteQuote, voteQuote } from './actions';
 import { Back, Empty, Head, Notice, Screen, Slide } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 export const metadata = { title: 'Citazioni' };
 
@@ -19,32 +20,32 @@ export default async function Quotes({ searchParams }: { searchParams: Promise<{
           <form action={createQuote} className="form">
             <label htmlFor="content">La frase</label><textarea id="content" name="content" maxLength={1000} rows={3} required />
             <label htmlFor="speaker">Chi l’ha detta?</label><input id="speaker" name="speaker" maxLength={80} required />
-            <div className="btn-row"><button className="btn">Salva citazione</button></div>
+            <div className="btn-row"><Submit>Salva citazione</Submit></div>
           </form>
         </details>
       </Slide>
       {error ? <Empty title="Non si carica">Impossibile caricare le citazioni.</Empty>
         : !data?.length ? <Empty title="Ancora nessuna perla">Ma sappiamo che esistono.</Empty>
-        : data.map(quote => {
+        : <Slide shape="a" tone="light">{data.map(quote => {
           const voted = quote.quote_votes.some(v => v.user_id === profile.id);
           return (
-            <article className="pane" key={quote.id}>
+            <article className="comment" key={quote.id}>
               <blockquote className="prose">“{quote.content}”</blockquote>
               <p><b>— {quote.speaker}</b></p>
-              <div className="btn-row">
+              <div className="acts">
                 <form action={voteQuote}>
                   <input type="hidden" name="id" value={quote.id} /><input type="hidden" name="operation" value={voted ? 'remove' : 'add'} />
                   <button className="chip" aria-pressed={voted}>{voted ? 'Votata' : 'Vota'} · {quote.quote_votes.length}</button>
                 </form>
                 {(quote.submitted_by === profile.id || profile.role === 'admin') && (
                   <details><summary>Elimina</summary>
-                    <form action={deleteQuote}><input type="hidden" name="id" value={quote.id} /><button className="btn ghost">Conferma eliminazione</button></form>
+                    <form action={deleteQuote}><input type="hidden" name="id" value={quote.id} /><div className="btn-row"><Submit className="btn ghost">Conferma eliminazione</Submit></div></form>
                   </details>
                 )}
               </div>
             </article>
           );
-        })}
+        })}</Slide>}
     </Screen>
   );
 }

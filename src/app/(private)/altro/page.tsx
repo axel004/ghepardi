@@ -15,7 +15,7 @@ export default async function Altro() {
         <Row when="Frasi" title="Citazioni" sub="Fuori contesto, per sempre" href="/quotes" />
         <Row when="Data" title="Eventi" sub="Cene, viaggi e altre scuse" href="/events" />
       </Slide>
-      <Slide title="Il gioco" shape="b" tone="light">
+      <Slide title="Il gioco" shape="b">
         <Row when="Punti" title="Classifiche" sub="Numeri ufficialissimi" href="/rankings" />
         <Row when="Mese" title="Format mensili" sub="Le rubriche del branco" href="/monthly" />
         <Row when="Anno" title="Premi" sub="I riconoscimenti, più o meno meritati" href="/awards" />

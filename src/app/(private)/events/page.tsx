@@ -1,6 +1,7 @@
 import { requireReadyMember } from '@/lib/auth';
 import { createEvent, deleteClubItem } from '../club-actions';
-import { Back, Empty, Head, Mark, Notice, Row, Screen, Slide, dayMonth } from '@/components/ui';
+import { Back, Empty, Head, Notice, Row, Screen, Slide, dayMonth } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 export const metadata = { title: 'Eventi' };
 
@@ -15,7 +16,7 @@ function EventForm({ event }: { event?: Event }) {
       <label htmlFor={`time-${suffix}`}>Ora <small>(facoltativa)</small></label><input id={`time-${suffix}`} name="time" type="time" defaultValue={event?.event_time?.slice(0, 5)} />
       <label htmlFor={`location-${suffix}`}>Luogo <small>(facoltativo)</small></label><input id={`location-${suffix}`} name="location" maxLength={160} defaultValue={event?.location ?? ''} />
       <label htmlFor={`description-${suffix}`}>Dettagli <small>(facoltativi)</small></label><textarea id={`description-${suffix}`} name="description" maxLength={2000} rows={3} defaultValue={event?.description ?? ''} />
-      <div className="btn-row"><button className="btn">{event ? 'Salva modifiche' : 'Crea evento'}</button></div>
+      <div className="btn-row"><Submit>{event ? 'Salva modifiche' : 'Crea evento'}</Submit></div>
     </form>
   );
 }
@@ -26,11 +27,10 @@ export default async function Events({ searchParams }: { searchParams: Promise<{
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const upcoming = data?.filter(event => event.event_date >= today).reverse() ?? [], past = data?.filter(event => event.event_date < today) ?? [];
   const admin = profile.role === 'admin';
-  const list = (events: Event[], isPast: boolean) => events.map(event => (
+  const list = (events: Event[]) => events.map(event => (
     <div key={event.id}>
       <Row when={dayMonth(event.event_date)} title={event.title}
-        sub={[event.event_time?.slice(0, 5), event.location].filter(Boolean).join(' · ') || undefined}
-        mark={<Mark state={isPast ? 'done' : 'open'} />} />
+        sub={[event.event_time?.slice(0, 5), event.location].filter(Boolean).join(' · ') || undefined} mark={<span />} />
       {event.description && <p className="foot" style={{ paddingLeft: 'calc(4.6rem + 12px)' }}>{event.description}</p>}
       {admin && <details><summary>Modifica o elimina</summary>
         <EventForm event={event} />
@@ -48,8 +48,8 @@ export default async function Events({ searchParams }: { searchParams: Promise<{
       {error ? <Empty title="Non si carica">Impossibile caricare gli eventi.</Empty>
         : !data?.length ? <Empty title="Calendario vuoto">Il calendario aspetta il branco.</Empty>
         : <>
-          {upcoming.length > 0 && <Slide title="In arrivo" shape="a">{list(upcoming, false)}</Slide>}
-          {past.length > 0 && <Slide title="Già successi" shape="c" tone="light">{list(past, true)}</Slide>}
+          {upcoming.length > 0 && <Slide title="In arrivo" shape="a">{list(upcoming)}</Slide>}
+          {past.length > 0 && <Slide title="Già successi" shape="c" tone="light" lean="upright">{list(past)}</Slide>}
         </>}
     </Screen>
   );

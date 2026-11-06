@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
 import { requireReadyMember } from '@/lib/auth';
-import { Back, Empty, Head, Notice, Row, Screen, Slide } from '@/components/ui';
+import { Back, Empty, Notice, Row, Screen, Slide } from '@/components/ui';
 
 export const metadata = { title: 'Wrapped' };
 
@@ -10,15 +10,15 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
   const year = requested && /^\d{4}$/.test(requested) && Number(requested) >= 2000 && Number(requested) <= current ? Number(requested) : current;
   const start = `${year}-01-01`, end = `${year + 1}-01-01`;
   const specs = [
-    { table: 'posts', column: 'published_at', label: 'Post' },
-    { table: 'comments', column: 'created_at', label: 'Commenti' },
-    { table: 'post_reactions', column: 'created_at', label: 'Reazioni' },
-    { table: 'photos', column: 'created_at', label: 'Foto' },
-    { table: 'polls', column: 'created_at', label: 'Sondaggi' },
-    { table: 'events', column: 'event_date', label: 'Eventi' },
-    { table: 'quotes', column: 'created_at', label: 'Citazioni' },
-    { table: 'awards', column: 'award_year', label: 'Premi' },
-    { table: 'posts', column: 'published_at', label: 'Post meme', meme: true },
+    { table: 'posts', column: 'published_at', label: 'Post', line: 'Tutti letti. Almeno il titolo.' },
+    { table: 'comments', column: 'created_at', label: 'Commenti', line: 'Nessuno ha cambiato idea.' },
+    { table: 'post_reactions', column: 'created_at', label: 'Reazioni', line: 'Più facile che rispondere.' },
+    { table: 'photos', column: 'created_at', label: 'Foto', line: 'Private. Per fortuna.' },
+    { table: 'polls', column: 'created_at', label: 'Sondaggi', line: 'Il voto è segreto. Il rancore no.' },
+    { table: 'events', column: 'event_date', label: 'Eventi', line: 'Qualcuno è pure arrivato puntuale.' },
+    { table: 'quotes', column: 'created_at', label: 'Citazioni', line: 'Dette sul serio, purtroppo.' },
+    { table: 'awards', column: 'award_year', label: 'Premi', line: 'Più o meno meritati.' },
+    { table: 'posts', column: 'published_at', label: 'Post meme', meme: true, line: 'L’archivio storico del club.' },
   ];
   const countQueries = specs.map(spec => {
     let q = supabase.from(spec.table).select('*', { count: 'exact', head: true });
@@ -34,23 +34,32 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
     supabase.from('photos').select('id,album_id').gte('created_at', start).lt('created_at', end).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(3),
   ]);
   const voteData = votes.data as { poll_votes: number; quote_votes: number; undated_votes: number } | null;
+  const years = [current, current - 1, current - 2];
   return (
     <Screen>
       <Back href="/altro">Altro</Back>
-      <Head title={`Wrapped ${year}`}>Storie, perle e momenti del branco. Tutto quello che c’è, senza inventare niente.</Head>
-      <Slide shape="b" tone="light">
-        <form method="get" className="form">
-          <label htmlFor="year">Scegli l’anno</label>
-          <input id="year" type="number" inputMode="numeric" name="year" min="2000" max={current} defaultValue={year} required />
-          <div className="btn-row"><button className="btn">Vai</button></div>
-        </form>
-      </Slide>
-      <Slide title="L’anno in numeri" shape="a">
-        {specs.map((spec, i) => <div className="stat" key={`${spec.table}-${spec.label}`}><span>{spec.label}</span><b className="tnum">{counts[i].error ? '—' : counts[i].count ?? 0}</b></div>)}
-        <div className="stat"><span>Voti registrati con data</span><b className="tnum">{votes.error || !voteData ? '—' : Number(voteData.poll_votes) + Number(voteData.quote_votes)}</b></div>
-      </Slide>
+      <nav className="years" aria-label="Scegli l’anno">
+        {years.map(y => <Link key={y} href={`/wrapped?year=${y}`} className="chip" aria-current={y === year ? 'page' : undefined}>{y}</Link>)}
+      </nav>
+      <section className="fact open">
+        <h1 className="sr">Wrapped {year}</h1>
+        <span className="moment tnum" aria-hidden="true">{year}</span>
+        <b>Il vostro anno insieme</b>
+        <p>Tutto quello che c’è, senza inventare niente. Scorri.</p>
+      </section>
+      {specs.map((spec, i) => (
+        <section key={spec.label} className={`fact ${i % 2 === 0 ? 'ink' : ''}`}>
+          <span className="moment tnum">{counts[i].error ? '—' : counts[i].count ?? 0}</span>
+          <b>{spec.label}</b>
+          <p>{spec.line}</p>
+        </section>
+      ))}
+      <section className="fact ink">
+        <span className="moment tnum">{votes.error || !voteData ? '—' : Number(voteData.poll_votes) + Number(voteData.quote_votes)}</span>
+        <b>Voti con data</b>
+        <p>Chi ha votato cosa non lo sa nessuno. Neanche qui.</p>
+      </section>
       {(counts.some(c => c.error) || votes.error) && <Notice kind="err">Alcuni conteggi non sono disponibili. Riprova più tardi.</Notice>}
-      <p className="pager"><small>I voti precedenti all’introduzione della data non sono attribuibili a un anno e non sono inclusi{voteData && Number(voteData.undated_votes) > 0 ? ` (${voteData.undated_votes} senza data)` : ''}. I contenuti eliminati non sono conteggiati. Date in UTC.</small></p>
       <Slide title="I premi del branco" shape="c" tone="light">
         {awards.error ? <p className="foot">Impossibile caricare i premi.</p> : !awards.data?.length ? <p className="foot">Nessun premio assegnato per questo anno.</p>
           : awards.data.slice(0, 20).map(award => { const member = Array.isArray(award.profiles) ? award.profiles[0] : award.profiles; return <Row key={award.id} when="Premio" title={award.title} sub={member?.display_name || member?.username || 'Membro non disponibile'} />; })}
@@ -62,7 +71,8 @@ export default async function Wrapped({ searchParams }: { searchParams: Promise<
       </Slide>
       <div className="sec-h"><h2>Qualche ricordo</h2></div>
       {photos.error ? <Empty title="Non si carica">Impossibile caricare le foto.</Empty> : !photos.data?.length ? <Empty title="Nessuna foto">Nessuna foto caricata in questo anno.</Empty>
-        : <div className="photos">{photos.data.map(photo => <Link href={`/gallery/${photo.album_id}`} key={photo.id}><img src={`/media/${photo.id}?size=thumb`} alt="Foto della gallery" loading="lazy" /></Link>)}</div>}
+        : <div className="strip">{photos.data.map(photo => <Link href={`/gallery/${photo.album_id}`} key={photo.id}><img src={`/media/${photo.id}?size=thumb`} alt="Foto della gallery" loading="lazy" /></Link>)}</div>}
+      <p className="note">I voti precedenti all’introduzione della data non sono attribuibili a un anno e non sono inclusi{voteData && Number(voteData.undated_votes) > 0 ? ` (${voteData.undated_votes} senza data)` : ''}. I contenuti eliminati non sono conteggiati.</p>
     </Screen>
   );
 }

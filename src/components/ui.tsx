@@ -41,9 +41,9 @@ export function Back({ href, children = 'Indietro' }: { href: string; children?:
   return <Link className="back" href={href} transitionTypes={['nav-back']}><Icon name="back" />{children}</Link>;
 }
 
-export function Mark({ state }: { state: 'done' | 'open' | 'void' }) {
-  const label = state === 'done' ? 'fatto' : state === 'void' ? 'annullato' : 'da fare';
-  return <span className={`mark ${state}`} role="img" aria-label={label} />;
+export function Mark({ state, label }: { state: 'done' | 'open' | 'void'; label?: string }) {
+  const fallback = state === 'done' ? 'fatto' : state === 'void' ? 'chiuso' : 'aperto';
+  return <span className={`mark ${state}`} role="img" aria-label={label ?? fallback} />;
 }
 
 export function Notice({ kind = 'ok', children }: { kind?: 'ok' | 'err'; children: ReactNode }) {
@@ -66,14 +66,24 @@ export function Row({ when, title, sub, href, mark, className = "", clamp = fals
   return href ? <Link href={href} className={cls} transitionTypes={['nav-forward']}>{inner}</Link> : <div className={cls}>{inner}</div>;
 }
 
-export function Slide({ children, title, tone = 'dark', shape = 'a' }: { children: ReactNode; title?: string; tone?: 'dark' | 'light'; shape?: 'a' | 'b' | 'c' }) {
-  return <section className={`slide ${shape} ${tone === 'light' ? 'light' : ''}`} aria-label={title}>{title && <h2>{title}</h2>}{children}</section>;
+export function Slide({ children, title, tone = 'dark', shape = 'a', lean, className = '' }: { children: ReactNode; title?: string; tone?: 'dark' | 'light'; shape?: 'a' | 'b' | 'c'; lean?: 'upright' | 'steep'; className?: string }) {
+  // Il vetrino pende finché la cosa è viva: dritto se è chiusa o passata, più inclinato se sta per scadere.
+  const style = lean === 'upright' ? { ['--lean' as string]: '0px', paddingLeft: 16, paddingRight: 16 } : lean === 'steep' ? { ['--lean' as string]: '38px' } : undefined;
+  return <section className={`slide ${shape} ${tone === 'light' ? 'light' : ''} ${className}`} style={style} aria-label={title}>{title && <h2>{title}</h2>}{children}</section>;
 }
 
 export function SectionHead({ title, href, link }: { title: string; href?: string; link?: string }) {
   return <div className="sec-h"><h2>{title}</h2>{href && <Link href={href} transitionTypes={['nav-forward']}>{link ?? 'Tutti'} →</Link>}</div>;
 }
 
-export const dateIt = (iso: string) => iso.split('-').reverse().join('/');
+export const dateIt = (iso: string) => new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`)).replace('.', '');
 export const dayMonth = (iso: string) => new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`)).replace('.', '');
 export const stamp = (iso: string) => new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' }).format(new Date(iso)).replace('.', '');
+/** Tempo per la colonna dell'orario: "Ora", "5 ore", "Ieri", "3 nov". */
+export const ago = (iso: string) => {
+  const hours = (Date.now() - new Date(iso).getTime()) / 3600000;
+  if (hours < 1) return 'Ora';
+  if (hours < 24) return `${Math.floor(hours)} ${Math.floor(hours) === 1 ? 'ora' : 'ore'}`;
+  if (hours < 48) return 'Ieri';
+  return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }).format(new Date(iso)).replace('.', '');
+};

@@ -1,6 +1,7 @@
 import { requireReadyMember } from '@/lib/auth';
 import { closePoll, createPoll, deleteClubItem, vote } from '../club-actions';
 import { Back, Empty, Head, Mark, Notice, Screen, Slide, dateIt } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 export const metadata = { title: 'Sondaggi' };
 
@@ -16,7 +17,7 @@ export default async function Polls({ searchParams }: { searchParams: Promise<{ 
     <Screen>
       <Back href="/altro">Altro</Back>
       <Head title="Sondaggi">Una scelta a testa, risultati per tutti. Il tuo voto resta segreto.</Head>
-      {query.error && <Notice kind="err">Controlla i dati: il sondaggio potrebbe essere chiuso o già votato.</Notice>}
+      {query.error && <Notice kind="err">{query.error === 'vote' ? 'Voto non registrato: forse il sondaggio è chiuso o avevi già votato. Ricarica e controlla.' : 'Controlla i dati e riprova: servono una domanda e da 2 a 6 opzioni diverse.'}</Notice>}
       {(query.saved || query.voted) && <Notice>{query.voted ? 'Voto depositato. Nessuno vedrà cosa hai scelto.' : 'Salvato.'}</Notice>}
       {profile.role === 'admin' && (
         <Slide shape="b" tone="light">
@@ -26,7 +27,7 @@ export default async function Polls({ searchParams }: { searchParams: Promise<{ 
               <label htmlFor="question">Domanda</label><input id="question" name="question" maxLength={200} required />
               <label htmlFor="options">Opzioni (da 2 a 6, una per riga)</label><textarea id="options" name="options" rows={4} required />
               <label htmlFor="closes_on">Aperto fino al giorno <small>(facoltativo, ora italiana)</small></label><input id="closes_on" name="closes_on" type="date" />
-              <div className="btn-row"><button className="btn">Crea sondaggio</button></div>
+              <div className="btn-row"><Submit>Crea sondaggio</Submit></div>
             </form>
           </details>
         </Slide>
@@ -38,19 +39,20 @@ export default async function Polls({ searchParams }: { searchParams: Promise<{ 
           const options = [...poll.poll_options].sort((a, b) => a.position - b.position);
           const votes = (id: string) => Number(results.data?.find((r: { option_id: string }) => r.option_id === id)?.votes ?? 0);
           const total = options.reduce((sum, o) => sum + votes(o.id), 0);
+          const soon = !closed && poll.closes_on ? Date.parse(`${poll.closes_on}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`) <= 86400000 : false;
           const status = closed ? 'Chiuso' : poll.closes_on ? `Aperto fino al ${dateIt(poll.closes_on)}` : 'Votazione aperta';
           return (
-            <Slide key={poll.id} shape={index % 2 ? 'b' : 'a'} tone={selected || closed ? 'dark' : 'light'} title={poll.question}>
+            <Slide key={poll.id} shape={index % 2 ? 'b' : 'a'} tone={selected || closed ? 'dark' : 'light'} title={poll.question} lean={closed ? 'upright' : soon ? 'steep' : undefined} className={query.voted ? 'just-voted' : ''}>
               <p className="foot" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Mark state={closed ? 'void' : selected ? 'done' : 'open'} /><span>{status}{selected ? ' · Hai votato' : ''}</span>
+                <Mark state={closed ? 'void' : selected ? 'done' : 'open'} label={closed ? 'chiuso' : selected ? 'hai votato' : 'non hai ancora votato'} /><span>{status}{selected ? ' · Hai votato' : ''}</span>
               </p>
               {selected || closed ? (
                 <div role="list" aria-label="Risultati">
-                  {options.map(option => {
+                  {options.map((option, i) => {
                     const n = votes(option.id);
                     return (
-                      <div role="listitem" className={`row solo res ${selected?.option_id === option.id ? 'pick' : ''}`} key={option.id} style={{ ['--v' as string]: total ? n / total : 0 }}>
-                        <span className="what"><b>{option.label}</b></span><span className="points tnum">{n} {n === 1 ? 'voto' : 'voti'}</span>
+                      <div role="listitem" className="row solo res" key={option.id} style={{ ['--v' as string]: total ? n / total : 0, ['--i' as string]: i }}>
+                        <span className="what"><b>{option.label}</b>{selected?.option_id === option.id && <small>Il tuo voto, lo vedi solo tu</small>}</span><span className="points tnum">{n} {n === 1 ? 'voto' : 'voti'}</span>
                         <i className="bar-fill" aria-hidden="true" />
                       </div>
                     );
@@ -63,17 +65,16 @@ export default async function Polls({ searchParams }: { searchParams: Promise<{ 
                   <fieldset><legend className="lbl">La tua scelta</legend>
                     {options.map(option => <label className="opt" key={option.id}><input type="radio" name="option" value={option.id} required /><span>{option.label}</span></label>)}
                   </fieldset>
-                  <div className="btn-row"><button className="btn">Deposita il voto</button></div>
+                  <div className="btn-row"><Submit pending="Deposito…">Deposita il voto</Submit></div>
                   <p className="foot"><small>Una volta depositato non si cambia, e nessuno vede cosa hai scelto.</small></p>
                 </form>
               )}
               {profile.role === 'admin' && (
-                <div className="btn-row">
-                  {!closed && <form action={closePoll}><input type="hidden" name="id" value={poll.id} /><button className="btn ghost">Chiudi votazione</button></form>}
-                  <details><summary>Elimina</summary><p className="foot">Verranno eliminati anche i voti.</p>
-                    <form action={deleteClubItem}><input type="hidden" name="kind" value="polls" /><input type="hidden" name="id" value={poll.id} /><button className="btn ghost">Conferma eliminazione</button></form>
-                  </details>
-                </div>
+                <details className="manage"><summary>Gestisci</summary>
+                  {!closed && <form action={closePoll}><input type="hidden" name="id" value={poll.id} /><div className="btn-row"><Submit className="btn ghost">Chiudi votazione</Submit></div></form>}
+                  <h3>Elimina sondaggio</h3><p className="foot">Verranno eliminati anche i voti.</p>
+                  <form action={deleteClubItem}><input type="hidden" name="kind" value="polls" /><input type="hidden" name="id" value={poll.id} /><Submit className="btn ghost">Conferma eliminazione</Submit></form>
+                </details>
               )}
             </Slide>
           );

@@ -12,7 +12,7 @@ export default async function Members() {
       {error ? <Empty title="Non si carica">Impossibile caricare i membri. Riprova più tardi.</Empty>
         : !data?.length ? <Empty title="Il branco si sta formando" />
         : <Slide shape="a">{data.map(member => (
-          <Row key={member.username} href={`/members/${member.username}`} when={member.role === 'admin' ? 'Admin' : `@${member.username}`.slice(0, 9)} title={member.display_name} sub={member.bio ?? `@${member.username}`} clamp />
+          <Row key={member.username} href={`/members/${member.username}`} when={member.role === 'admin' ? 'Admin' : 'Membro'} title={member.display_name} sub={member.bio ? `@${member.username} · ${member.bio}` : `@${member.username}`} clamp />
         ))}</Slide>}
     </Screen>
   );

@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
+import { ViewTransition } from 'react';
 import { requireReadyMember } from '@/lib/auth';
 import { pageNumber } from '@/lib/posts';
-import { Empty, Head, Icon, Pager, Row, Screen, Slide, dateIt } from '@/components/ui';
+import { Empty, Head, Icon, Pager, Screen, dateIt } from '@/components/ui';
 
 export const metadata = { title: 'Gallery' };
 
@@ -14,13 +15,17 @@ export default async function Gallery({ searchParams }: { searchParams: Promise<
   return (
     <Screen>
       <Head title="Gallery" tick={<Icon name="lock" />}>Le foto del branco. Private: le vedono solo i membri.</Head>
-      {profile.role === 'admin' && <p className="pager"><Link href="/admin/gallery" className="btn" transitionTypes={['nav-forward']}>Gestisci la gallery</Link></p>}
+      {profile.role === 'admin' && <p className="pager"><Link href="/admin/gallery" className="btn ghost" transitionTypes={['nav-forward']}>Gestisci la gallery</Link></p>}
       {error ? <Empty title="Non si carica">Impossibile caricare gli album. Riprova.</Empty>
-        : !shown.length ? <Empty title="Nessun album">Non ci sono ancora album.</Empty>
-        : <Slide shape="c">{shown.map(album => (
-          <Row key={album.id} href={`/gallery/${album.id}`} title={album.title} sub={album.event_date ? dateIt(album.event_date) : undefined}
-            when={album.photos?.[0] ? <img src={`/media/${album.photos[0].id}?size=thumb`} alt="" width={64} height={48} loading="lazy" style={{ width: 64, height: 48, objectFit: 'cover' }} /> : 'Vuoto'} />
-        ))}</Slide>}
+        : !shown.length ? <Empty title="Ancora nessun album">Le foto migliori sono ancora nei telefoni di qualcuno.</Empty>
+        : <div>{shown.map(album => (
+          <Link key={album.id} className="album" href={`/gallery/${album.id}`} transitionTypes={['nav-forward']}>
+            {album.photos?.[0]
+              ? <ViewTransition name={`album-${album.id}`}><img src={`/media/${album.photos[0].id}?size=thumb`} alt="" loading="lazy" /></ViewTransition>
+              : <span className="empty-cover lbl">Album vuoto</span>}
+            <span className="cap"><b>{album.title}</b>{album.event_date && <span className="meta">{dateIt(album.event_date)}</span>}</span>
+          </Link>
+        ))}</div>}
       <Pager prev={page > 1 ? `/gallery?page=${page - 1}` : undefined} next={albums && albums.length > 20 ? `/gallery?page=${page + 1}` : undefined} prevLabel="Precedenti" nextLabel="Successivi" />
     </Screen>
   );

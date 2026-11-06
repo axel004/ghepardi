@@ -1,6 +1,7 @@
 import { requireReadyMember } from '@/lib/auth';
 import { createRanking, deleteClubItem, saveScore } from '../club-actions';
 import { Back, Empty, Head, Notice, Row, Screen, Slide } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 export const metadata = { title: 'Classifiche' };
 
@@ -16,7 +17,7 @@ export default async function Rankings({ searchParams }: { searchParams: Promise
       {query.saved && <Notice>Classifica aggiornata.</Notice>}
       {admin && (
         <Slide shape="b" tone="light"><details><summary>Crea una classifica</summary>
-          <form action={createRanking} className="form"><label htmlFor="title">Titolo</label><input id="title" name="title" maxLength={120} required /><div className="btn-row"><button className="btn">Crea classifica</button></div></form>
+          <form action={createRanking} className="form"><label htmlFor="title">Titolo</label><input id="title" name="title" maxLength={120} required /><div className="btn-row"><Submit>Crea classifica</Submit></div></form>
         </details></Slide>
       )}
       {error ? <Empty title="Non si carica">Impossibile caricare le classifiche.</Empty>
@@ -33,27 +34,22 @@ export default async function Rankings({ searchParams }: { searchParams: Promise
                 );
               })}
               {admin && (
-                <>
-                  <details><summary>Aggiungi o aggiorna punteggio</summary>
-                    <form action={saveScore} className="form"><input type="hidden" name="ranking" value={ranking.id} />
-                      <p className="foot"><small>Per aggiornare un punteggio usa lo stesso nome.</small></p>
-                      <label htmlFor={`name-${ranking.id}`}>Nome</label><input id={`name-${ranking.id}`} name="name" maxLength={80} required />
-                      <label htmlFor={`points-${ranking.id}`}>Punti</label><input id={`points-${ranking.id}`} name="points" type="number" inputMode="numeric" min="-1000000" max="1000000" required />
-                      <div className="btn-row"><button className="btn">Salva punteggio</button></div>
+                <details className="manage"><summary>Gestisci</summary>
+                  <form action={saveScore} className="form"><input type="hidden" name="ranking" value={ranking.id} />
+                    <label htmlFor={`name-${ranking.id}`}>Nome</label><input id={`name-${ranking.id}`} name="name" maxLength={80} required />
+                    <label htmlFor={`points-${ranking.id}`}>Punti</label><input id={`points-${ranking.id}`} name="points" type="number" inputMode="numeric" min="-1000000" max="1000000" required />
+                    <small>Per aggiornare un punteggio usa lo stesso nome.</small>
+                    <div className="btn-row"><Submit>Salva punteggio</Submit></div>
+                  </form>
+                  {entries.length > 0 && <><h3>Rimuovi un punteggio</h3>{entries.map(entry => (
+                    <form key={entry.id} action={deleteClubItem} className="row solo">
+                      <input type="hidden" name="kind" value="ranking_entries" /><input type="hidden" name="id" value={entry.id} />
+                      <span className="what"><b>{entry.name}</b></span><button className="text-btn">Rimuovi</button>
                     </form>
-                  </details>
-                  {entries.length > 0 && <details><summary>Rimuovi un punteggio</summary>
-                    {entries.map(entry => (
-                      <form key={entry.id} action={deleteClubItem} className="row solo">
-                        <input type="hidden" name="kind" value="ranking_entries" /><input type="hidden" name="id" value={entry.id} />
-                        <span className="what"><b>{entry.name}</b></span><button className="text-btn">Rimuovi</button>
-                      </form>
-                    ))}
-                  </details>}
-                  <details><summary>Elimina classifica</summary><p className="foot">Verranno eliminati anche i punteggi.</p>
-                    <form action={deleteClubItem}><input type="hidden" name="kind" value="rankings" /><input type="hidden" name="id" value={ranking.id} /><div className="btn-row"><button className="btn ghost">Conferma eliminazione</button></div></form>
-                  </details>
-                </>
+                  ))}</>}
+                  <h3>Elimina classifica</h3><p className="foot">Verranno eliminati anche i punteggi.</p>
+                  <form action={deleteClubItem}><input type="hidden" name="kind" value="rankings" /><input type="hidden" name="id" value={ranking.id} /><Submit className="btn ghost">Conferma eliminazione</Submit></form>
+                </details>
               )}
             </Slide>
           );

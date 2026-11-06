@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/auth';
 import { pageNumber } from '@/lib/posts';
 import { createAlbum } from '../../gallery/actions';
 import { Back, Empty, Head, Notice, Pager, Row, Screen, Slide, dateIt } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 export default async function AdminGallery({ searchParams }: { searchParams: Promise<{ page?: string; error?: string; deleted?: string }> }) {
   const { supabase } = await requireAdmin(), query = await searchParams, page = pageNumber(query.page);
@@ -14,7 +15,7 @@ export default async function AdminGallery({ searchParams }: { searchParams: Pro
         <form action={createAlbum} className="form">
           <label htmlFor="title">Nome dell’album</label><input id="title" name="title" required maxLength={120} placeholder="Es. Vacanze al mare" />
           <label htmlFor="event_date">Data <small>(facoltativa)</small></label><input id="event_date" name="event_date" type="date" />
-          <div className="btn-row"><button className="btn">Crea album</button></div>
+          <div className="btn-row"><Submit>Crea album</Submit></div>
         </form>
       </Slide>
       {query.error && <Notice kind="err">Impossibile creare l’album. Controlla i dati e riprova.</Notice>}

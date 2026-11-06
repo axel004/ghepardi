@@ -1,4 +1,5 @@
 import { setPassword } from '@/app/actions';
+import { Submit } from '@/components/submit';
 
 export const metadata = { title: 'Scegli una password' };
 
@@ -16,7 +17,7 @@ export default async function SetPassword({ searchParams }: { searchParams: Prom
           <input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={72} />
           <label htmlFor="confirmation">Ripeti la password</label>
           <input id="confirmation" name="confirmation" type="password" autoComplete="new-password" required minLength={8} maxLength={72} />
-          <div className="btn-row"><button className="btn">Continua</button></div>
+          <div className="btn-row"><Submit>Continua</Submit></div>
         </form>
       </section>
     </main>

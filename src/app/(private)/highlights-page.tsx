@@ -4,6 +4,7 @@ import { requireReadyMember } from '@/lib/auth';
 import { isUuid, pageNumber } from '@/lib/posts';
 import { deleteHighlight, saveHighlight } from './highlights-actions';
 import { Back, Empty, Head, Notice, Pager, Screen, Slide } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 type Kind = 'monthly' | 'awards' | 'fame' | 'shame';
 type Highlight = { id: string; title: string; description: string | null; photo_id?: string | null; feature_month?: string; subject?: string; award_year?: number; entry_year?: number; member_id?: string | null; profiles?: { username: string | null; display_name: string | null } | null };
@@ -72,31 +73,36 @@ export async function HighlightsPage({ kind, searchParams, girlOnly = false }: {
                 <label className="opt" style={{ borderColor: 'var(--pane-line)' }}><input type="radio" name="photo_id" value="" defaultChecked={!editing?.photo_id} /><span>Nessuna foto</span></label>
                 <div className="photos" style={{ padding: 0, marginTop: 8 }}>{photos.map((photo, index) => <label key={photo.id} style={{ display: 'block', marginBottom: 8 }}><img src={`/media/${photo.id}?size=thumb`} alt={`Foto ${index + 1}`} loading="lazy" style={{ width: '100%' }} /><span className="opt" style={{ borderColor: 'var(--pane-line)' }}><input type="radio" name="photo_id" value={photo.id} defaultChecked={editing?.photo_id === photo.id} /><span>Usa questa</span></span></label>)}</div>
               </fieldset>}
-              <div className="btn-row"><button className="btn">{editing ? 'Salva modifiche' : 'Pubblica'}</button>{editing && <Link href={config.route} className="btn ghost">Annulla modifica</Link>}</div>
+              <div className="btn-row"><Submit>{editing ? 'Salva modifiche' : 'Pubblica'}</Submit>{editing && <Link href={config.route} className="btn ghost">Annulla modifica</Link>}</div>
             </form>
           </details>
         </Slide>
       ))}
       {error ? <Empty title="Non si carica">Impossibile caricare questa sezione. Riprova.</Empty>
         : !items.length ? <Empty title="Ancora niente da raccontare">Il branco ha tempo per rimediare.</Empty>
-        : items.slice(0, 20).map(item => (
-          <article className="pane" key={item.id}>
-            <p className="meta">{kind === 'monthly' && item.feature_month ? monthName(item.feature_month) : item.award_year ?? item.entry_year}</p>
-            {item.photo_id && <img className="hero-img" style={{ margin: '8px 0', width: '100%' }} src={`/media/${item.photo_id}?size=thumb`} alt="" loading="lazy" />}
-            <h2 style={{ borderBottom: 0, marginBottom: 0, paddingBottom: 0 }}>{item.title}</h2>
-            {item.subject && <h3>{item.subject}</h3>}
-            {kind === 'awards' && <p><b>{item.profiles?.username ? <Link href={`/members/${item.profiles.username}`}>{item.profiles.display_name}</Link> : item.profiles?.display_name || 'Membro non disponibile'}</b></p>}
-            {item.description && <p className="prose">{item.description}</p>}
-            {isAdmin && (
-              <div className="btn-row">
-                <Link className="btn ghost" href={`${config.route}?edit=${item.id}`}>Modifica</Link>
-                <details><summary>Elimina</summary><p className="foot">Confermi l’eliminazione?</p>
-                  <form action={deleteHighlight}><input type="hidden" name="kind" value={kind} /><input type="hidden" name="id" value={item.id} /><button className="btn ghost">Conferma eliminazione</button></form>
-                </details>
+        : items.slice(0, 20).map((item, index) => {
+          const year = item.award_year ?? item.entry_year;
+          return (
+            <Slide key={item.id} shape={index % 2 ? 'b' : 'a'} tone={kind === 'shame' ? 'dark' : 'light'} className={kind === 'shame' ? 'shame' : ''}>
+              <div className="entry" style={{ padding: '8px 0' }}>
+                {item.photo_id && <img src={`/media/${item.photo_id}?size=thumb`} alt="" loading="lazy" />}
+                {kind === 'monthly' && item.feature_month ? <p className="meta" style={{ gridColumn: '1 / -1', marginBottom: 4 }}>{monthName(item.feature_month)}</p> : <span className="moment tnum">{year}</span>}
+                <div className="body" style={kind === 'monthly' ? { gridColumn: '1 / -1' } : undefined}>
+                  <h2>{item.title}</h2>
+                  {item.subject && <p>{item.subject}</p>}
+                  {kind === 'awards' && <p><b>{item.profiles?.username ? <Link href={`/members/${item.profiles.username}`}>{item.profiles.display_name}</Link> : item.profiles?.display_name || 'Membro non disponibile'}</b></p>}
+                  {item.description && <p className="prose" style={{ whiteSpace: 'pre-wrap' }}>{item.description}</p>}
+                </div>
               </div>
-            )}
-          </article>
-        ))}
+              {isAdmin && (
+                <details className="manage"><summary>Gestisci</summary>
+                  <div className="btn-row"><Link className="btn ghost" href={`${config.route}?edit=${item.id}`}>Modifica</Link></div>
+                  <form action={deleteHighlight}><input type="hidden" name="kind" value={kind} /><input type="hidden" name="id" value={item.id} /><div className="btn-row"><Submit className="btn ghost">Conferma eliminazione</Submit></div></form>
+                </details>
+              )}
+            </Slide>
+          );
+        })}
       <Pager prev={page > 1 ? `${base}?page=${page - 1}` : undefined} next={items.length > 20 ? `${base}?page=${page + 1}` : undefined} />
     </Screen>
   );

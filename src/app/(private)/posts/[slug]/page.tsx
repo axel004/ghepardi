@@ -1,11 +1,13 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
+import { ViewTransition } from 'react';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
 import { emojis, isUuid, pageNumber, reactionMeta } from '@/lib/posts';
 import { addComment, deleteComment, reactToPost } from '../actions';
 import { MentionText, mentionNames } from '../mentions';
-import { Back, Empty, Icon, Notice, Pager, Screen, Slide, stamp } from '@/components/ui';
+import { Back, Icon, Notice, Pager, Screen, Slide, stamp } from '@/components/ui';
+import { Submit } from '@/components/submit';
 
 const category: Record<string, string> = { news: 'News', stories: 'Storia', cronache: 'Cronaca', viaggi: 'Viaggio', serate: 'Serata', meme: 'Meme', speciali: 'Speciale' };
 
@@ -39,62 +41,65 @@ export default async function PostPage({ params, searchParams }: { params: Promi
         <span className="lbl">{category[post.category] ?? post.category}{post.status === 'draft' ? ' · Bozza' : ''}</span>
         <h1><MentionText text={post.title} names={knownNames} /></h1>
       </header>
-      {post.cover_photo_id && <img className="hero-img" src={`/media/${post.cover_photo_id}`} alt={`Copertina: ${post.title}`} />}
+      {post.cover_photo_id && <ViewTransition name={`cover-${slug}`}><img className="hero-img" src={`/media/${post.cover_photo_id}`} alt={`Copertina: ${post.title}`} /></ViewTransition>}
       <article className="pane"><div className="prose"><MentionText text={post.content} names={knownNames} /></div></article>
       {profile.role === 'admin' && <p className="pager"><Link href={`/admin/posts/${post.id}`} className="btn ghost">Modifica post</Link></p>}
       {post.status === 'published' && (
         <>
           <Slide title="Reazioni" shape="b">
             {reactionResult.error ? <p className="foot">Impossibile caricare le reazioni.</p> : (
-              <div className="chips" style={{ padding: '6px 0 8px' }}>
+              <div className="chips react">
                 {emojis.map(emoji => {
                   const selected = reactions.some(r => r.emoji === emoji && r.user_id === profile.id), count = reactions.filter(r => r.emoji === emoji).length;
                   return (
                     <form key={emoji} action={reactToPost}>
                       <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="emoji" value={emoji} /><input type="hidden" name="operation" value={selected ? 'remove' : 'add'} />
-                      <button className="chip" aria-label={`${reactionMeta[emoji].label}, ${count} ${count === 1 ? 'reazione' : 'reazioni'}${selected ? ', la tua' : ''}`} aria-pressed={selected}>{reactionMeta[emoji].icon === 'mark' ? <span className="mask chip-mark" aria-hidden="true" /> : <Icon name={reactionMeta[emoji].icon} />}<span className="tnum">{count}</span></button>
+                      <button className="chip" aria-label={`${reactionMeta[emoji].label}, ${count} ${count === 1 ? 'reazione' : 'reazioni'}${selected ? ', la tua' : ''}`} aria-pressed={selected}>{reactionMeta[emoji].icon === 'mark' ? <span className="mask chip-mark" aria-hidden="true" /> : <Icon name={reactionMeta[emoji].icon} />}{count > 0 && <span className="tnum">{count}</span>}</button>
                     </form>
                   );
                 })}
               </div>
             )}
           </Slide>
-          <div className="sec-h"><h2>Commenti</h2></div>
-          {query.error && <Notice kind="err">Operazione non riuscita. Riprova.</Notice>}
-          <Slide shape="a" tone="light">
-            <form action={addComment} className="form">
+          {query.error && <Notice kind="err">Il commento non è passato. Il testo è ancora lì sopra? Riprova.</Notice>}
+          <Slide title="Commenti" shape="a" tone="light">
+            {commentResult.error || focused.error ? <p className="foot">Impossibile caricare i commenti.</p>
+              : !visibleComments.length ? <p className="foot">Ancora nessun commento. Rompi il ghiaccio.</p>
+              : visibleComments.map(comment => {
+                const author = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
+                const parent = parentResult.data?.find(item => item.id === comment.parent_id), parentAuthor = Array.isArray(parent?.profiles) ? parent.profiles[0] : parent?.profiles;
+                return (
+                  <article className="comment" id={`comment-${comment.id}`} key={comment.id}>
+                    <p className="meta">{author?.display_name || author?.username || 'Membro'} · {stamp(comment.created_at)}{comment.parent_id ? ` · a ${parentAuthor?.display_name || parentAuthor?.username || 'un commento'}` : ''}</p>
+                    <p className="prose"><MentionText text={comment.content} names={knownNames} /></p>
+                    <div className="acts">
+                      <details>
+                        <summary>Rispondi</summary>
+                        <form action={addComment} className="form">
+                          <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="parent_id" value={comment.id} />
+                          <label htmlFor={`reply-${comment.id}`}>La tua risposta</label>
+                          <textarea id={`reply-${comment.id}`} name="content" maxLength={2000} rows={2} required />
+                          <div className="btn-row"><Submit>Invia risposta</Submit></div>
+                        </form>
+                      </details>
+                      {(comment.user_id === profile.id || profile.role === 'admin') && (
+                        <details>
+                          <summary>Elimina</summary>
+                          <form action={deleteComment}><input type="hidden" name="id" value={comment.id} /><input type="hidden" name="slug" value={slug} /><div className="btn-row"><Submit className="btn ghost">Conferma eliminazione</Submit></div></form>
+                        </details>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            <form action={addComment} className="form manage">
               <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} />
               <label htmlFor="comment">Scrivi un commento</label>
               <textarea id="comment" name="content" maxLength={2000} rows={3} required />
               <small>Per menzionare un amico scrivi @nome_utente.</small>
-              <div className="btn-row"><button className="btn">Commenta</button></div>
+              <div className="btn-row"><Submit>Commenta</Submit></div>
             </form>
           </Slide>
-          {commentResult.error || focused.error ? <Empty title="Non si carica">Impossibile caricare i commenti.</Empty>
-            : !visibleComments.length ? <Empty title="Ancora nessun commento">Rompi il ghiaccio.</Empty>
-            : visibleComments.map(comment => {
-              const author = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
-              const parent = parentResult.data?.find(item => item.id === comment.parent_id), parentAuthor = Array.isArray(parent?.profiles) ? parent.profiles[0] : parent?.profiles;
-              return (
-                <article className="pane" id={`comment-${comment.id}`} key={comment.id}>
-                  <p className="meta">{author?.display_name || author?.username || 'Membro'} · {stamp(comment.created_at)}</p>
-                  {comment.parent_id && <p className="meta">↳ In risposta a {parentAuthor?.display_name || parentAuthor?.username || 'un commento'}</p>}
-                  <p className="prose"><MentionText text={comment.content} names={knownNames} /></p>
-                  <details>
-                    <summary>Rispondi</summary>
-                    <form action={addComment} className="form">
-                      <input type="hidden" name="post_id" value={post.id} /><input type="hidden" name="slug" value={slug} /><input type="hidden" name="parent_id" value={comment.id} />
-                      <label htmlFor={`reply-${comment.id}`}>La tua risposta</label>
-                      <textarea id={`reply-${comment.id}`} name="content" maxLength={2000} rows={2} required />
-                      <div className="btn-row"><button className="btn">Invia risposta</button></div>
-                    </form>
-                  </details>
-                  {(comment.user_id === profile.id || profile.role === 'admin') && (
-                    <form action={deleteComment}><input type="hidden" name="id" value={comment.id} /><input type="hidden" name="slug" value={slug} /><button className="text-btn">Elimina commento</button></form>
-                  )}
-                </article>
-              );
-            })}
           <Pager prev={page > 1 ? `/posts/${slug}?page=${page - 1}` : undefined} next={comments.length > 20 ? `/posts/${slug}?page=${page + 1}` : undefined} />
         </>
       )}

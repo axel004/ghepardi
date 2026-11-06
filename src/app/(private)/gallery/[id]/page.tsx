@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- private images must not enter the shared image cache. */
 import Link from 'next/link';
+import { ViewTransition } from 'react';
 import { notFound } from 'next/navigation';
 import { requireReadyMember } from '@/lib/auth';
 import { isUuid, pageNumber } from '@/lib/posts';
@@ -20,9 +21,11 @@ export default async function Album({ params, searchParams }: { params: Promise<
       {profile.role === 'admin' && <p className="pager"><Link href={`/admin/gallery/${id}`} className="btn ghost">Aggiungi o gestisci foto</Link></p>}
       {photos.error ? <Empty title="Non si carica">Impossibile caricare le foto.</Empty>
         : !photos.data?.length ? <Empty title="Album vuoto">Questo album è ancora vuoto.</Empty>
-        : <div className="photos">{photos.data.slice(0, 24).map(photo => (
+        : <div className="photos">{photos.data.slice(0, 24).map((photo, index) => (
           <a key={photo.id} href={`/media/${photo.id}`} target="_blank" rel="noreferrer" aria-label={photo.caption || `Apri foto di ${album.title}`}>
-            <img src={`/media/${photo.id}?size=thumb`} alt={photo.caption || `Foto di ${album.title}`} loading="lazy" />
+            {index === 0 && page === 1
+              ? <ViewTransition name={`album-${album.id}`}><img src={`/media/${photo.id}?size=thumb`} alt={photo.caption || `Foto di ${album.title}`} /></ViewTransition>
+              : <img src={`/media/${photo.id}?size=thumb`} alt={photo.caption || `Foto di ${album.title}`} loading="lazy" />}
           </a>
         ))}</div>}
       <Pager prev={page > 1 ? `/gallery/${id}?page=${page - 1}` : undefined} next={photos.data && photos.data.length > 24 ? `/gallery/${id}?page=${page + 1}` : undefined} prevLabel="Precedenti" nextLabel="Successive" />
